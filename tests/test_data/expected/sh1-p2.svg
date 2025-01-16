@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="49" height="33">
+<defs >
+    <pattern id="grid" patternUnits="userSpaceOnUse" width="16" height="16">
+        <path stroke="black" stroke-width="1" d="M 16 0 L 0 0 0 16" fill="none"/>
+    </pattern>
+    <marker 
+      id='head' 
+      orient="auto" 
+      markerWidth='3' 
+      markerHeight='4' 
+      refX='0.1' 
+      refY='2'
+    >
+      <path d='M0,0 V4 L2,2 Z' fill="red" />
+    </marker>
+</defs>
+<rect width="100%" height="100%" fill="url(#grid)"/>
+<circle cx="24" cy="24" r="4" fill="green"/>
+<path
+    id='arrow-middle'
+    marker-end='url(#head)'
+    stroke-width='2'
+    fill='red'
+    stroke='red'
+    d='M 24 15 24 5'
+  />
+<path
+    id='arrow-left'
+    marker-end='url(#head)'
+    stroke-width='2'
+    fill='red'
+    stroke='red'
+    d='M 14.5 14.5 5 5'
+  />
+<path
+    id='arrow-right'
+    marker-end='url(#head)'
+    stroke-width='2'
+    fill='red'
+    stroke='red'
+    d='M 34.5,14.5 44,5'
+  />
+</svg>
