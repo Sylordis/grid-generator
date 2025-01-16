@@ -1,6 +1,6 @@
 import pytest
 
-from grid_generator.color import Color
+from utils.color import Color
 
 
 @pytest.mark.parametrize(

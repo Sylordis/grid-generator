@@ -22,9 +22,15 @@ class SVGExporter(Exporter):
     height_img = heightn * cfg.cell_size + cfg.border_width
     width_img = widthn * cfg.cell_size + cfg.border_width
     self._log.debug(f"Grid size: {widthn}x{heightn} => Image size: {width_img}x{height_img} px")
+    def_elements: list[svg.Element] = []
     elements: list[svg.Element] = []
-    elements.extend(self.create_svg_grid(grid, cfg))
-    elements.extend(self.create_svg_elements_in_grid(grid, cfg))
+    defs,els = self.create_svg_grid(grid, cfg)
+    elements.extend(els)
+    def_elements.extend(defs)
+    defs,els = self.create_svg_elements_in_grid(grid, cfg)
+    elements.extend(els)
+    def_elements.extend(defs)
+    elements.insert(0, svg.Defs(elements=def_elements))
     canvas = svg.SVG(
       width=width_img,
       height=height_img,
@@ -34,43 +40,54 @@ class SVGExporter(Exporter):
     with open(output_file, "w") as write_file:
       write_file.write(str(canvas))
 
-  def create_svg_grid(self, grid: Grid, cfg: GridConfig) -> list[svg.Element]:
+  def create_svg_grid(self, grid: Grid, cfg: GridConfig) -> tuple[list[svg.Element], list[svg.Element]]:
     """
     Creates the grid base for the svg.
 
     :param grid: object representation of the grid
     :param cfg: base configuration of the grid
+    :return: normal elements, defs elements
     """
     svg_path = svg.Path(fill="none", stroke="black", stroke_width=cfg.border_width, d=[f"M {cfg.cell_size} 0 L 0 0 0 {cfg.cell_size}"])
     svg_pattern = svg.Pattern(id="grid", patternUnits = "userSpaceOnUse", width = cfg.cell_size, height = cfg.cell_size, elements=[svg_path])
-    svg_defs = svg.Defs(elements=[svg_pattern])
     rect = svg.Rect(width="100%", height="100%", fill="url(#grid)")
-    return [svg_defs, rect]
+    return [svg_pattern], [rect]
 
-  def create_svg_elements_in_grid(self, grid: Grid, cfg: GridConfig) -> list[svg.Element]:
+  def create_svg_elements_in_grid(self, grid: Grid, cfg: GridConfig) -> tuple[list[svg.Element], list[svg.Element]]:
     """
     :param grid: grid to create the svg elements from
-    :return: 
+    :return: normal elements, defs elements
     """
+    def_elements: list[svg.Element] = []
     elements: list[svg.Element] = []
     for col in range(len(grid.content)):
       for row in range(len(grid.content[col])):
-        cell_center = (0,0)
+        cell_center = (col*cfg.cell_size + cfg.cell_size/2, row*cfg.cell_size + cfg.cell_size/2)
+        self._log.debug(cell_center)
         for shape in grid.content[col][row].content:
           self._log.debug(shape)
-          elements.append(self.create_element(shape, cfg, cell_center, grid, row, col))
-          # TODO convert shapes into SVG code https://pypi.org/project/svg.py/
-    return elements
+          elements.append(self.create_element(shape, cfg))
+    return def_elements, elements
 
-  def create_element(self, shape: Shape, cfg:GridConfig, cell_center: tuple[int,int], grid:Grid, row:int, col:int) -> svg.Element:
+  def create_element(self, shape: Shape, cfg:GridConfig) -> svg.Element:
     """
     Dispatch the call to create an element from the Shape.
     """
     element = None
+    # TODO convert shapes into SVG code https://pypi.org/project/svg.py/
+    # TODO calculate the position of the shape according to cell orientation and number of shapes in the cell
     if isinstance(shape, Circle):
-      element = self.create_circle(shape, cfg, cell_center)
+      element = self.create_circle(shape, cfg)
     return element
 
-  def create_circle(self, shape: Circle, cfg: GridConfig, cell_center:tuple[int,int]) -> svg.Circle:
-    
-    return svg.Circle(cx=cell_center[0], cy=cell_center[1], fill=shape.fill, r=shape.radius)
+  def create_circle(self, shape: Circle, cfg: GridConfig) -> svg.Circle:
+    radius = 0
+    if isinstance(shape.width, str):
+      if '%' in shape.width:
+        radius = cfg.cell_size * float(shape.width[:-1]) / 100 / 2
+      elif 'px' in shape.width:
+        radius = cfg.cell_size * float(shape.width[:-2]) / 2
+    elif isinstance(shape.width, int) or isinstance(shape.width, float):
+      radius = shape.width / 2
+    self._log.debug(f"Circle=((cx,cy)={shape.position}, r={radius}, fill={shape.fill})")
+    return svg.Circle(cx=shape.position[0], cy=shape.position[1], fill=shape.fill, r=radius)

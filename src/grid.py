@@ -31,7 +31,7 @@ class GridConfig:
   "Color of the grid border."
   border_width: int = 1
   "Border width (in px)."
-  cell_size: int = 15
+  cell_size: int = 16
   "Size of the grid cells (in pixels)."
   shapes_color: Color = Color("#FF0000")
   "Default colour of the objects in the grid."

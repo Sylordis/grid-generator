@@ -1,3 +1,4 @@
+import dataclasses
 import logging
 import re
 from typing import Any
@@ -32,8 +33,8 @@ class ShapeCreator:
       n = 1
     if shape_cfg:
       shape_cfg = shape_cfg[1:-1].split(GridSymbol.PARAMS_SEPARATOR)
-    self._log.debug(f"shape: x{n}, {shape_id}, {shape_cfg}")
     cfg = self.interpret_cfg(shape_cfg)
+    self._log.debug(f"shape: x{n}, {shape_id}, {shape_cfg}, {cfg}")
     match shape_id:
       case ShapeSymbol.ARROW | "Arrow":
         shape = Arrow(**cfg)
@@ -50,12 +51,11 @@ class ShapeCreator:
     :param shape_cfg_txt: configuration text.
     :return: a dictionary of parameters to inject into the shape constructor.
     """
-    print([e.value for e in OrientationSymbol])
     cfg:dict[str,Any] = {}
     size_indicator = []
     for param in shape_cfg_txt:
       match = re.match("([a-z-]+)=(.*)", param)
-      size_match = re.match("[0-9]+(px|cm|em|%)", param)
+      size_match = re.match("\d+(px|cm|em|%)", param)
       if match:
         cfg[match.group(1).replace('-','_')] = match.group(2)
       elif param in [e.value for e in OrientationSymbol]:
@@ -64,9 +64,15 @@ class ShapeCreator:
         size_indicator.append(param)
       else:
         self._log.debug(param)
-    # TODO
-    if len(size_indicator) > 0:
-      pass
+    # Manage sizes
+    if len(size_indicator) == 1:
+      if "width" not in cfg:
+        cfg["width"] = size_indicator[0]
+      if "height" not in cfg:
+        cfg["height"] = size_indicator[0]
+    elif len(size_indicator) > 1:
+      cfg["width"] = size_indicator[0]
+      cfg["height"] = size_indicator[1]
     self._log.debug(cfg)
     return self.convert_cfg_values(cfg)
 
