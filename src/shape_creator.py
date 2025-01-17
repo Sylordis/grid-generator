@@ -74,16 +74,4 @@ class ShapeCreator:
       cfg["width"] = size_indicator[0]
       cfg["height"] = size_indicator[1]
     self._log.debug(cfg)
-    return self.convert_cfg_values(cfg)
-
-  def convert_cfg_values(self, old_cfg) -> dict[str,Any]:
-    """
-    Replaces certain dictionary entries that are programmatically correct.
-
-    :param old_cfg: 
-    :return: a dictionary of parameters to inject into the shape constructor.
-    """
-    cfg:dict[str,Any] = old_cfg
-    # TODO replace properties that has to be replaced
     return cfg
-

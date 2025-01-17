@@ -11,12 +11,11 @@ class Exporter(ABC):
     self._log = logging.getLogger()
 
   @abstractmethod
-  def export(self, grid: Grid, cfg: GridConfig, output_file: Path):
+  def export(self, grid: Grid, output_file: Path):
     """
     Main method to export a grid.
 
     :param grid: object representation of the grid
-    :param cfg: base configuration of the grid
     :param output_file: output file
     """
     pass

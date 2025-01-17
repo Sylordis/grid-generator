@@ -37,6 +37,7 @@ class GridDrawingTool:
     Tries to draw all provided files.
 
     :param files_str: list of string paths of files to generate images of
+    :param cfg: configuration of the grid
     """
     self._log.debug(f"files: {files_str}")
     files: list[tuple[Path,Path]] = []
@@ -53,10 +54,7 @@ class GridDrawingTool:
     # Draw
     for input, output in files:
       grid_config = GridConfig() if cfg is None else cfg
-      try:
-        self.draw_grid(input, output, grid_config)
-      except Exception as e:
-        self._log.error(f"Error while processing the grid: {e}")
+      self.draw_grid(input, output, grid_config)
 
   def draw_grid(self, input_file: Path, output_file: Path, cfg: GridConfig):
     """
@@ -66,42 +64,40 @@ class GridDrawingTool:
     :param output_file: output image file
     """
     self._log.debug(f"{input_file.resolve()} => {output_file.resolve()}")
-    grid = self.parse_grid_file(input_file, cfg)
+    grid = self.parse_grid_file(input_file)
+    grid.cfg = cfg
     exporter: Exporter = SVGExporter()
-    exporter.export(grid, cfg, output_file)
+    exporter.export(grid, output_file)
     self._log.info(f"{input_file.name} => {output_file.name}")
 
-  def parse_grid_file(self, input_file: Path, cfg: GridConfig) -> Grid:
+  def parse_grid_file(self, input_file: Path) -> Grid:
     """
     Creates an object representation of the grid provided in a file.
 
-    :param file: file to read
+    :param input_file: file to read
     :return: a grid object
     """
     with open(input_file, newline='') as grid_file:
       grid:Grid = Grid()
-      row = 0
-      col = 0
       for line in grid_file:
-        col=0
         line_txt = line.rstrip()
         cells_str = [cell.strip() for cell in line_txt.split(GridSymbol.CELL_SEPARATOR)]
         self._log.debug(cells_str)
         cells = []
         for cell_str in cells_str:
-          cell = self.parse_cell(cell_str, cfg, (col,row))
+          cell = self.parse_cell(cell_str)
           cells.append(cell)
-          col += 1
         grid.content.append(cells)
         self._log.debug(cells)
-        row += 1
       return grid
 
-  def parse_cell(self, cell_text: str, cfg: GridConfig, cell_position:tuple[int,int]) -> Cell:
+  def parse_cell(self, cell_text: str) -> Cell:
     """
     Parses a cell text to create a Cell and its content.
 
     :param cell_text: text to parse
+    :param cfg: configuration of the grid
+    :param cell_position: 
     :return: a cell object
     """
     cell = Cell()
@@ -117,9 +113,5 @@ class GridDrawingTool:
         while (group:=next(it, None)) is not None:
           self._log.debug(f"group:{group}")
           shapes = self._shape_creator.interpret_and_create_shapes(next(it), next(it), next(it))
-          # Set position
-          # TODO Set correctly according to cell orientation and number
-          for shape in shapes:
-            shape.position = (cell_position[0] * cfg.cell_size + cfg.cell_size / 2, cell_position[1] * cfg.cell_size + cfg.cell_size / 2)
           cell.content.extend(shapes)
     return cell

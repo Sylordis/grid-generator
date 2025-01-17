@@ -15,13 +15,13 @@
     </marker>
 </defs>
 <rect width="100%" height="100%" fill="url(#grid)"/>
-<circle cx="24" cy="24" r="6" fill="green"/>
 <path
-    id='arrow1'
+    id='arrow-1-0'
     marker-end='url(#head)'
     stroke-width='2'
-    fill='red'
-    stroke='red'
+    fill='#ff0000'
+    stroke='#ff0000'
     d='M 24 15 24 5'
   />
+<circle cx="24" cy="24" r="6" fill="green"/>
 </svg>

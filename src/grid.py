@@ -33,7 +33,7 @@ class GridConfig:
   "Border width (in px)."
   cell_size: int = 16
   "Size of the grid cells (in pixels)."
-  shapes_color: Color = Color("#FF0000")
+  shapes_fill: Color = Color("#FF0000")
   "Default colour of the objects in the grid."
 
 
@@ -44,3 +44,9 @@ class Grid:
   """
   content: list[list[Cell]] = field(default_factory=list)
   "Content of the grid, 2D array of Cells."
+  cfg: GridConfig|None = None
+  "Configuration of the grid."
+
+  def __post_init__(self):
+    if self.cfg is None:
+      self.cfg = GridConfig()

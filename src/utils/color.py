@@ -41,4 +41,7 @@ class Color:
         return Color(COLORS_DICT.get(name, None))
 
     def web(self) -> str:
-        return "#%02s%02s%02s".format(hex(self.red), hex(self.green), hex(self.blue))
+        return "#{:02x}{:02x}{:02x}".format(int(self.red * INT_BASE), int(self.green * INT_BASE), int(self.blue * INT_BASE))
+
+    def __str__(self) -> str:
+        return self.web()
