@@ -5,7 +5,8 @@ from typing import TypeAlias, Any
 
 from .exporter import Exporter
 from ..shapes import Shape, Arrow, Circle
-from ..grid import Grid, GridConfig
+from ..grid import Grid, GridConfig, Cell
+from ..utils.orientation import Orientation
 
 
 Position: TypeAlias = tuple[float,float]
@@ -88,6 +89,7 @@ class SVGExporter(Exporter):
     # TODO find a more generic approach to the shape creation
     # Something like self.create_shape(svg.Circle, dictionary of parameters)
     # then create_shape() double checks the actual parameters (what of the definitions then?)
+    # TODO Provide rotation angle and translation from here directly, then just apply it during shape creation
     if isinstance(shape, Circle):
       defs,els = self.create_circle(shape, grid, position)
     elif isinstance(shape, Arrow):
@@ -110,9 +112,17 @@ class SVGExporter(Exporter):
     marker = svg.Marker(id=eid, orient="auto", markerWidth='3', markerHeight='4', refX='0.1', refY='2', elements=[head_path])
     defs = {eid: marker}
     cell_center = self.calculate_cell_center(grid, cell_pos)
-    # TODO Manage rotation
-    arrow_start = (cell_center[0],cell_center[1]+(grid.cfg.cell_size/2-1))
-    arrow_end = (cell_center[0],cell_center[1]-(grid.cfg.cell_size/2-5))
+    # TODO Manage actual size
+    # TODO Manage rotation: rotation needs to be done from the center of the cell or shape
+    base_arrow_start = (cell_center[0]-(grid.cfg.cell_size/2-1),cell_center[1])
+    base_arrow_end = (cell_center[0]+(grid.cfg.cell_size/2-4), cell_center[1])
+    direction:Orientation = self.from_cell_cfg("orientation", grid.cell(cell_pos[0], cell_pos[1]), shape.orientation)
+    if direction:
+      arrow_start = Orientation.rotate_to(base_arrow_start, direction)
+      arrow_end = Orientation.rotate_to(base_arrow_end, direction)
+    else:
+      arrow_start = base_arrow_start
+      arrow_end = base_arrow_end
     self._log.debug(f"Arrow=((x,y)s={arrow_start}, (x,y)e={arrow_end}, fill={shape_color})")
     elts = [svg.Path(id=f"arrow-{cell_pos[0]}-{cell_pos[1]}", marker_end=f"url(#{eid})", stroke_width='2', fill=shape_color, stroke=shape_color,
                      d=f"M {arrow_start[0]},{arrow_start[1]} {arrow_end[0]},{arrow_end[1]}")]
@@ -132,8 +142,16 @@ class SVGExporter(Exporter):
       size = value
     return size
 
-  def from_cfg(self, key:str, grid:Grid, value:Any = None):
+  @classmethod
+  def from_cfg(cls, key:str, grid:Grid, value:Any = None):
     nvalue = value
     if not value:
       nvalue = grid.cfg.__dict__.get(key, value)
+    return nvalue
+
+  @classmethod
+  def from_cell_cfg(cls, key:str, cell:Cell, value:Any = None):
+    nvalue = value
+    if not value:
+      nvalue = cell.__dict__.get(key, value)
     return nvalue

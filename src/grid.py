@@ -50,3 +50,6 @@ class Grid:
   def __post_init__(self):
     if self.cfg is None:
       self.cfg = GridConfig()
+
+  def cell(self, col: int, row: int) -> Cell:
+    return self.content[row][col]

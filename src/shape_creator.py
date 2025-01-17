@@ -5,6 +5,7 @@ from typing import Any
 
 
 from .shapes import Shape, Arrow, Circle
+from .utils.color import COLORS
 from .utils.orientation import Orientation, ORIENTATIONS
 from .utils.symbols import GridSymbol, ShapeSymbol, OrientationSymbol
 
@@ -29,12 +30,13 @@ class ShapeCreator:
     :return: a list of shapes
     """
     shape:Shape|None = None
-    if not n:
-      n = 1
+    ni = 1
+    if n:
+      ni = int(n)
     if shape_cfg:
       shape_cfg = shape_cfg[1:-1].split(GridSymbol.PARAMS_SEPARATOR)
     cfg = self.interpret_cfg(shape_cfg)
-    self._log.debug(f"shape: x{n}, {shape_id}, {shape_cfg}, {cfg}")
+    self._log.debug(f"shape: x{ni}, {shape_id}, {shape_cfg}, {cfg}")
     match shape_id:
       case ShapeSymbol.ARROW | "Arrow":
         shape = Arrow(**cfg)
@@ -42,7 +44,7 @@ class ShapeCreator:
         shape = Circle(**cfg)
       case _:
         self._log.error(f"Unknown shape ID '{shape_id}'.")
-    return [shape] * n
+    return [shape] * ni
 
   def interpret_cfg(self, shape_cfg_txt: list[str]) -> dict[str,Any]:
     """
@@ -52,7 +54,7 @@ class ShapeCreator:
     :return: a dictionary of parameters to inject into the shape constructor.
     """
     cfg:dict[str,Any] = {}
-    size_indicator = []
+    sizes = []
     for param in shape_cfg_txt:
       match = re.match("([a-z-]+)=(.*)", param)
       size_match = re.match("\d+(px|cm|em|%)", param)
@@ -61,17 +63,19 @@ class ShapeCreator:
       elif param in [e.value for e in OrientationSymbol]:
         cfg["orientation"] = [e for e in ORIENTATIONS if e.shortcut == param][0]
       elif size_match:
-        size_indicator.append(param)
+        sizes.append(param)
+      elif param in COLORS:
+        cfg["fill"] = param
       else:
         self._log.debug(param)
     # Manage sizes
-    if len(size_indicator) == 1:
+    if len(sizes) == 1:
       if "width" not in cfg:
-        cfg["width"] = size_indicator[0]
+        cfg["width"] = sizes[0]
       if "height" not in cfg:
-        cfg["height"] = size_indicator[0]
-    elif len(size_indicator) > 1:
-      cfg["width"] = size_indicator[0]
-      cfg["height"] = size_indicator[1]
+        cfg["height"] = sizes[0]
+    elif len(sizes) > 1:
+      cfg["width"] = sizes[0]
+      cfg["height"] = sizes[1]
     self._log.debug(cfg)
     return cfg

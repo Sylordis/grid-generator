@@ -3,7 +3,7 @@ from typing import Any
 
 
 INT_BASE = 255
-COLORS_DICT: dict[str,Any] = {
+COLORS: dict[str,Any] = {
     "black": "#000000",
     "blue": "#0000FF",
     "green": "#00FF00",
@@ -38,7 +38,7 @@ class Color:
 
     @staticmethod
     def from_name(name:str) -> Color:
-        return Color(COLORS_DICT.get(name, None))
+        return Color(COLORS.get(name, None))
 
     def web(self) -> str:
         return "#{:02x}{:02x}{:02x}".format(int(self.red * INT_BASE), int(self.green * INT_BASE), int(self.blue * INT_BASE))
