@@ -1,4 +1,3 @@
-
 from .color import Color
-from .orientation import Orientation, ORIENTATIONS
+from .geometry import Position, AngleMeasurement, Angle, ORIENTATIONS
 from .symbols import GridSymbol, OrientationSymbol, ShapeSymbol
