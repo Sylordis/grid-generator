@@ -15,9 +15,16 @@
     </marker>
 </defs>
 <rect width="100%" height="100%" fill="url(#grid)"/>
-<circle cx="24" cy="24" r="6" fill="green"/>
 <path
-    id='arrow-middle'
+    id='arrow-1-1-1'
+    marker-end='url(#head)'
+    stroke-width='2'
+    fill='red'
+    stroke='red'
+    d='M 14,14 6,6'
+  />
+<path
+    id='arrow-2-1-1'
     marker-end='url(#head)'
     stroke-width='2'
     fill='red'
@@ -25,35 +32,28 @@
     d='M 24,15 24,5'
   />
 <path
-    id='arrow-diag-left'
+    id='arrow-3-1-1'
     marker-end='url(#head)'
     stroke-width='2'
     fill='red'
     stroke='red'
-    d='M 14.5,14.5 5,5'
+    d='M 34,14 43,6'
   />
 <path
-    id='arrow-diag-right'
-    marker-end='url(#head)'
-    stroke-width='2'
-    fill='red'
-    stroke='red'
-    d='M 34.5,14.5 44,5'
-  />
-<path
-    id='arrow-right'
-    marker-end='url(#head)'
-    stroke-width='2'
-    fill='red'
-    stroke='red'
-    d='M 33.5,24 44,24'
-  />
-<path
-    id='arrow-right'
+    id='arrow-1-2-1'
     marker-end='url(#head)'
     stroke-width='2'
     fill='red'
     stroke='red'
     d='M 15,24 5,24'
+  />
+<circle id="circle-2-2-1" cx="24" cy="24" r="6" fill="green"/>
+<path
+    id='arrow-3-3-1'
+    marker-end='url(#head)'
+    stroke-width='2'
+    fill='red'
+    stroke='red'
+    d='M 33.5,24 44,24'
   />
 </svg>

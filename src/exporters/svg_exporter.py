@@ -78,17 +78,19 @@ class SVGExporter(Exporter):
         elements: list[svg.Element] = []
         for row in range(len(grid.content)):
             for col in range(len(grid.content[row])):
+                shape_index = 1
                 # TODO calculate the position of each shape according to cell orientation and number of shapes in the cell
                 # TODO Provide translation from here directly, then just apply it during shape creation
                 for shape in grid.content[row][col].content:
                     self._log.debug(shape)
-                    defs, elts = self.create_element(shape, grid, Position(col, row))
+                    defs, elts = self.create_element(shape, grid, Position(col, row), shape_index=shape_index)
                     def_elements.update(defs)
                     elements.extend(elts)
+                    shape_index = shape_index + 1
         return def_elements, elements
 
     def create_element(
-        self, shape: Shape, grid: Grid, cell_position: Position
+        self, shape: Shape, grid: Grid, cell_position: Position, shape_index: int = 1
     ) -> SVGElementCreation:
         """
         Dispatch the call to create an element from the Shape.
@@ -101,19 +103,22 @@ class SVGExporter(Exporter):
         definitions: dict[str, list[svg.Element]] = {}
         elements: list[svg.Element] = []
         self._log.debug(f"pos={cell_position}, {shape}")
+        shape_id = f"{shape.__class__.__name__.lower()}-{cell_position[0]+1}-{cell_position[1]+1}-{shape_index}"
         if isinstance(shape, Circle):
             definitions, elements = self.create_circle(
-                shape, grid, cell_position, translation=None
+                shape, grid, cell_position, translation=None, shape_id = shape_id
             )
         elif isinstance(shape, Arrow):
             direction: Angle = self.from_cell_cfg(
                 "orientation",
                 grid.cell(cell_position[0], cell_position[1]),
-                shape.orientation,
+                shape.orientation
             )
             definitions, elements = self.create_arrow(
-                shape, grid, cell_position, direction=direction, translation=None
+                shape, grid, cell_position, direction=direction, translation=None,
+                shape_id = shape_id
             )
+        self._log.debug(f"Shape {shape_id} created")
         return definitions, elements
 
     def create_circle(
@@ -122,6 +127,7 @@ class SVGExporter(Exporter):
         grid: Grid,
         cell_pos: Position,
         translation: Position | None = None,
+        shape_id: str | None = None
     ) -> SVGElementCreation:
         shape_center = self.calculate_cell_center(grid, cell_pos)
         if translation:
@@ -142,6 +148,7 @@ class SVGExporter(Exporter):
         cell_pos: Position,
         direction: Angle | None = None,
         translation: Position | None = None,
+        shape_id: str | None = None
     ) -> SVGElementCreation:
         eid = "arrow-head"
         shape_color = self.from_cfg("shapes_fill", grid, shape.fill)
@@ -157,15 +164,14 @@ class SVGExporter(Exporter):
         )
         defs = {eid: marker}
         cell_center = self.calculate_cell_center(grid, cell_pos)
-        arrow_start, arrow_end = self.create_base_arrow_and_rotate(
+        arrow_start, arrow_end = self.create_base_arrow(
             shape, grid, direction
         )
-        self._log.debug(
-            f"Arrow: after rotation {arrow_start}=>{arrow_end}, distance={arrow_start.distance(arrow_end)}"
-        )
-        arrow_start += cell_center
-        arrow_end += cell_center
-        self._log.debug(f"Arrow: final {arrow_start}=>{arrow_end}, fill={shape_color}")
+        arrow_start, arrow_end = self.rotate_arrow(arrow_start, arrow_end, shape, grid, direction)
+        arrow_start = arrow_start + cell_center
+        arrow_end = arrow_end + cell_center
+        self._log.debug(f"Arrow: final {arrow_start}=>{arrow_end} ({cell_center}), fill={shape_color}")
+        shape_id = '' if shape_id is None else shape_id
         elts = [
             svg.Path(
                 id=f"arrow-{cell_pos[0]}-{cell_pos[1]}",
@@ -178,7 +184,7 @@ class SVGExporter(Exporter):
         ]
         return defs, elts
 
-    def create_base_arrow_and_rotate(
+    def create_base_arrow(
         self, shape: Arrow, grid: Grid, direction: Angle | None = None
     ) -> tuple[Position, Position]:
         shape_width = shape.width if shape.width else 1.0
@@ -187,20 +193,9 @@ class SVGExporter(Exporter):
         arrow_length = (grid.cfg.cell_size - head_length) * shape_width * base_ratio
         head_length = head_length * base_ratio
         # Center the arrow on origin first
-        base_arrow_start = Position(0, arrow_length)
-        base_arrow_end = Position(0, 0)
-        self._log.debug(
-            f"Arrow: before rotation {base_arrow_start}=>{base_arrow_end}, distance={base_arrow_start.distance(base_arrow_end)}"
-        )
-        if direction and direction != ORIENTATIONS.get(OrientationSymbol.TOP):
-            # Base orientation is towards the top
-            angle: Angle = direction - ORIENTATIONS[OrientationSymbol.TOP]
-            self._log.debug(f"rotation={angle}")
-            arrow_start = rotate(base_arrow_start, -angle, lambda x: round(x, 2))
-        else:
-            arrow_start = base_arrow_start
-        arrow_end = base_arrow_end
-        return (arrow_start, arrow_end)
+        arrow_start = Position(0, arrow_length)
+        arrow_end = Position(0, 0)
+        return arrow_start, arrow_end
 
     def calculate_cell_center(self, grid: Grid, cell_pos: Position) -> Position:
         pos = [pos * grid.cfg.cell_size + grid.cfg.cell_size / 2 for pos in cell_pos]
@@ -232,3 +227,21 @@ class SVGExporter(Exporter):
         if not value:
             nvalue = cell.__dict__.get(key, value)
         return nvalue
+
+    def rotate_arrow(self, arrow_start: Position, arrow_end: Position, shape: Shape, grid: Grid, direction: Angle | None = None):
+        self._log.debug(
+            f"Arrow: before rotation {arrow_start}=>{arrow_end}, distance={arrow_start.distance(arrow_end)}"
+        )
+        # TODO Rotate
+        # if direction and direction != ORIENTATIONS.get(OrientationSymbol.TOP):
+        #     # Base orientation is towards the top
+        #     angle: Angle = direction - ORIENTATIONS[OrientationSymbol.TOP]
+        #     self._log.debug(f"rotation={angle}")
+        #     arrow_start = rotate(base_arrow_start, -angle, lambda x: round(x, 2))
+        # else:
+        arrow_start_rotated = arrow_start
+        arrow_end_rotated = arrow_end
+        self._log.debug(
+            f"Arrow: after rotation {arrow_start}=>{arrow_end}, distance={arrow_start.distance(arrow_end)}"
+        )
+        return arrow_start_rotated, arrow_end_rotated

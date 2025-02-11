@@ -20,7 +20,7 @@ class Position:
             npos = Position(self.x + o, self.y + o)
         if isinstance(o, Position):
             npos = Position(self.x + o.x, self.y + o.y)
-        if isinstance(o, tuple):
+        if isinstance(o, tuple) or isinstance(o, list):
             npos = Position(self.x + o[0], self.y + o[1])
         return npos
 
@@ -81,7 +81,7 @@ class Position:
 
 
 class AngleMeasurement(StrEnum):
-    DEGREES = ("degrees",)
+    DEGREES = "degrees",
     RADIANS = "radians"
 
 
