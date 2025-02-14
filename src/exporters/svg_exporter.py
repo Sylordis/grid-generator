@@ -140,16 +140,10 @@ class SVGExporter(Exporter):
                 shape, grid, cell_position, translation=None, shape_id=shape_id
             )
         elif isinstance(shape, Arrow):
-            direction: Angle = self.from_cell_cfg(
-                "orientation",
-                grid.cell(cell_position[0], cell_position[1]),
-                shape.orientation,
-            )
             definitions, elements = self.create_arrow(
                 shape,
                 grid,
                 cell_position,
-                direction=direction,
                 translation=None,
                 shape_id=shape_id,
             )
@@ -161,7 +155,6 @@ class SVGExporter(Exporter):
         shape: Arrow,
         grid: Grid,
         cell_pos: Position,
-        direction: Angle | None = None,
         translation: Position | None = None,
         shape_id: str | None = None,
     ) -> SVGElementCreation:
@@ -204,7 +197,7 @@ class SVGExporter(Exporter):
         # Re-center in the middle of the cell
         arrow_start = cell_center + arrow_start
         arrow_end = cell_center + arrow_end
-        # TODO apply translation
+        # TODO apply translation if needed
         # https://math.stackexchange.com/questions/2204520/how-do-i-rotate-a-line-segment-in-a-specific-point-on-the-line
         self._log.debug(
             f"Arrow: final {arrow_start}=>{arrow_end}, fill={shape_color}"
@@ -212,7 +205,7 @@ class SVGExporter(Exporter):
         shape_id = "" if shape_id is None else shape_id
         elts = [
             svg.Path(
-                id=f"arrow-{cell_pos[0]}-{cell_pos[1]}",
+                id=shape_id,
                 marker_end=f"url(#{eid})",
                 stroke_width="2",
                 fill=shape_color,
@@ -240,6 +233,7 @@ class SVGExporter(Exporter):
         )
         return {}, [
             svg.Circle(
+                id=shape_id,
                 cx=shape_center[0], cy=shape_center[1], fill=shape_color, r=radius
             )
         ]
