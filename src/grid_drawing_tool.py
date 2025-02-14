@@ -111,6 +111,7 @@ class GridDrawingTool:
             pattern = r"(\{[^}]+\})?((\d*)([A-Z][A-Za-z]*)(\{[^}]+\})?)?(;(\d*)([A-Z][A-Za-z]*)(\{[^}]+\})?)*"
             match = re.match(pattern, cell_text)
             if match:
+                self._log.debug(f"groups: {match.groups()}")
                 it = iter(match.groups())
                 cell_cfg = next(it)
                 if cell_cfg:

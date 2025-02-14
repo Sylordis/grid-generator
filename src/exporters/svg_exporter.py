@@ -108,7 +108,7 @@ class SVGExporter(Exporter):
         for row in range(len(grid.content)):
             for col in range(len(grid.content[row])):
                 shape_index = 1
-                # TODO calculate the position of each shape according to cell orientation and number of shapes in the cell
+                # TODO calculate the translation of each shape according to cell orientation and number of shapes in the cell
                 # TODO Provide translation from here directly, then just apply it during shape creation
                 for shape in grid.content[row][col].content:
                     self._log.debug(shape)
