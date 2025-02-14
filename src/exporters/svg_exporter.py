@@ -1,3 +1,4 @@
+from dataclasses import dataclass, field
 import logging
 from pathlib import Path
 import svg
@@ -6,10 +7,36 @@ from typing import TypeAlias, Any
 from .exporter import Exporter
 from ..grid import Grid, GridConfig, Cell
 from ..shapes import Shape, Arrow, Circle
+from ..utils.converters import str_to_number
 from ..utils.geometry import Angle, Position, ORIENTATIONS, OrientationSymbol, rotate
 
 
 SVGElementCreation: TypeAlias = tuple[dict[str, list[svg.Element]], list[svg.Element]]
+
+
+@dataclass(frozen=True)
+class SVGCircleCfg:
+    pass
+
+
+@dataclass(frozen=True)
+class SVGArrowCfg:
+
+    head_length: float = 3
+    "Head length."
+
+
+@dataclass(frozen=True)
+class SVGExporterCfg:
+
+    arrows: SVGArrowCfg | None = field(default=SVGArrowCfg())
+    "Arrows configuration."
+    circles: SVGCircleCfg | None = field(default=SVGCircleCfg())
+    "Circles configuration."
+    shape_base_cell_ratio: Any = '80%'
+    "Base ratio for a shape width according to cell size."
+    starting_angle = Angle(0)
+    "Starting angle for all shapes."
 
 
 class SVGExporter(Exporter):
@@ -19,6 +46,8 @@ class SVGExporter(Exporter):
 
     def __init__(self):
         super().__init__()
+        self.exporter_cfg = SVGExporterCfg()
+        self._log.debug(self.exporter_cfg)
 
     def export(self, grid: Grid, output_file: Path):
         self._log.debug(f"Creating grid image to {output_file}")
@@ -83,7 +112,9 @@ class SVGExporter(Exporter):
                 # TODO Provide translation from here directly, then just apply it during shape creation
                 for shape in grid.content[row][col].content:
                     self._log.debug(shape)
-                    defs, elts = self.create_element(shape, grid, Position(col, row), shape_index=shape_index)
+                    defs, elts = self.create_element(
+                        shape, grid, Position(col, row), shape_index=shape_index
+                    )
                     def_elements.update(defs)
                     elements.extend(elts)
                     shape_index = shape_index + 1
@@ -93,7 +124,7 @@ class SVGExporter(Exporter):
         self, shape: Shape, grid: Grid, cell_position: Position, shape_index: int = 1
     ) -> SVGElementCreation:
         """
-        Dispatch the call to create an element from the Shape.
+        Dispatch the call to create an svg element from the Shape.
 
         :param shape: shape to create
         :param grid: grid
@@ -106,40 +137,24 @@ class SVGExporter(Exporter):
         shape_id = f"{shape.__class__.__name__.lower()}-{cell_position[0]+1}-{cell_position[1]+1}-{shape_index}"
         if isinstance(shape, Circle):
             definitions, elements = self.create_circle(
-                shape, grid, cell_position, translation=None, shape_id = shape_id
+                shape, grid, cell_position, translation=None, shape_id=shape_id
             )
         elif isinstance(shape, Arrow):
             direction: Angle = self.from_cell_cfg(
                 "orientation",
                 grid.cell(cell_position[0], cell_position[1]),
-                shape.orientation
+                shape.orientation,
             )
             definitions, elements = self.create_arrow(
-                shape, grid, cell_position, direction=direction, translation=None,
-                shape_id = shape_id
+                shape,
+                grid,
+                cell_position,
+                direction=direction,
+                translation=None,
+                shape_id=shape_id,
             )
         self._log.debug(f"Shape {shape_id} created")
         return definitions, elements
-
-    def create_circle(
-        self,
-        shape: Circle,
-        grid: Grid,
-        cell_pos: Position,
-        translation: Position | None = None,
-        shape_id: str | None = None
-    ) -> SVGElementCreation:
-        shape_center = self.calculate_cell_center(grid, cell_pos)
-        if translation:
-            shape_center += translation
-        shape_color = self.from_cfg("shapes_fill", grid, shape.fill)
-        radius = self.calculate_size(grid, shape.width) / 2
-        self._log.debug(
-            f"Circle=((cx,cy)={shape_center}, r={radius}, fill={shape_color})"
-        )
-        return {}, [
-            svg.Circle(cx=shape_center[0], cy=shape_center[1], fill=shape_color, r=radius)
-        ]
 
     def create_arrow(
         self,
@@ -148,7 +163,7 @@ class SVGExporter(Exporter):
         cell_pos: Position,
         direction: Angle | None = None,
         translation: Position | None = None,
-        shape_id: str | None = None
+        shape_id: str | None = None,
     ) -> SVGElementCreation:
         eid = "arrow-head"
         shape_color = self.from_cfg("shapes_fill", grid, shape.fill)
@@ -156,7 +171,7 @@ class SVGExporter(Exporter):
         marker = svg.Marker(
             id=eid,
             orient="auto",
-            markerWidth="3",
+            markerWidth=self.exporter_cfg.arrows.head_length,
             markerHeight="4",
             refX="0.1",
             refY="2",
@@ -164,14 +179,37 @@ class SVGExporter(Exporter):
         )
         defs = {eid: marker}
         cell_center = self.calculate_cell_center(grid, cell_pos)
-        arrow_start, arrow_end = self.create_base_arrow(
-            shape, grid, direction
+        cell_bounds = [cell_center - Position.both(grid.cfg.cell_size/2), cell_center + Position.both(grid.cfg.cell_size/2)]
+        self._log.debug(
+            f"Cell: pos={cell_pos} center:{cell_center}, size={grid.cfg.cell_size}, bounds={cell_bounds}"
         )
-        arrow_start, arrow_end = self.rotate_arrow(arrow_start, arrow_end, shape, grid, direction)
-        arrow_start = arrow_start + cell_center
-        arrow_end = arrow_end + cell_center
-        self._log.debug(f"Arrow: final {arrow_start}=>{arrow_end} ({cell_center}), fill={shape_color}")
-        shape_id = '' if shape_id is None else shape_id
+        # Create arrow
+        arrow_length_full = self.calculate_size(grid, shape.width)
+        # The ends of the arrow are created around (0,0) directly, just need to add cell_center to them after rotation.
+        arrow_start = Position(-arrow_length_full/2, 0)
+        arrow_end = Position(round(arrow_length_full/2 - self.exporter_cfg.arrows.head_length, 2), 0)
+        self._log.debug(
+            f"Arrow: base {arrow_start}=>{arrow_end}, length_full={arrow_length_full} (supposed={grid.cfg.cell_size * str_to_number(self.exporter_cfg.shape_base_cell_ratio)}), distance={arrow_start.distance(arrow_end)}"
+        )
+        # Rotate
+        if shape.orientation != self.exporter_cfg.starting_angle:
+            angle: Angle = shape.orientation - self.exporter_cfg.starting_angle
+            self._log.debug(f"rotation={angle}")
+            arrow_start = rotate(arrow_start, angle, lambda x: round(x, 2))
+            arrow_end = rotate(arrow_end, angle, lambda x: round(x, 2))
+        # else:
+        self._log.debug(
+            f"Arrow: after rotation {arrow_start}=>{arrow_end} distance={arrow_start.distance(arrow_end)}"
+        )
+        # Re-center in the middle of the cell
+        arrow_start = cell_center + arrow_start
+        arrow_end = cell_center + arrow_end
+        # TODO apply translation
+        # https://math.stackexchange.com/questions/2204520/how-do-i-rotate-a-line-segment-in-a-specific-point-on-the-line
+        self._log.debug(
+            f"Arrow: final {arrow_start}=>{arrow_end}, fill={shape_color}"
+        )
+        shape_id = "" if shape_id is None else shape_id
         elts = [
             svg.Path(
                 id=f"arrow-{cell_pos[0]}-{cell_pos[1]}",
@@ -184,18 +222,27 @@ class SVGExporter(Exporter):
         ]
         return defs, elts
 
-    def create_base_arrow(
-        self, shape: Arrow, grid: Grid, direction: Angle | None = None
-    ) -> tuple[Position, Position]:
-        shape_width = shape.width if shape.width else 1.0
-        base_ratio = 0.9
-        head_length = 4
-        arrow_length = (grid.cfg.cell_size - head_length) * shape_width * base_ratio
-        head_length = head_length * base_ratio
-        # Center the arrow on origin first
-        arrow_start = Position(0, arrow_length)
-        arrow_end = Position(0, 0)
-        return arrow_start, arrow_end
+    def create_circle(
+        self,
+        shape: Circle,
+        grid: Grid,
+        cell_pos: Position,
+        translation: Position | None = None,
+        shape_id: str | None = None,
+    ) -> SVGElementCreation:
+        shape_center = self.calculate_cell_center(grid, cell_pos)
+        if translation:
+            shape_center += translation
+        shape_color = self.from_cfg("shapes_fill", grid, shape.fill)
+        radius = self.calculate_size(grid, shape.width) / 2
+        self._log.debug(
+            f"Circle=((cx,cy)={shape_center}, r={radius}, fill={shape_color})"
+        )
+        return {}, [
+            svg.Circle(
+                cx=shape_center[0], cy=shape_center[1], fill=shape_color, r=radius
+            )
+        ]
 
     def calculate_cell_center(self, grid: Grid, cell_pos: Position) -> Position:
         pos = [pos * grid.cfg.cell_size + grid.cfg.cell_size / 2 for pos in cell_pos]
@@ -203,17 +250,28 @@ class SVGExporter(Exporter):
 
     def calculate_size(self, grid: Grid, value) -> float:
         size = 0
+        if value is None:
+            value = self.exporter_cfg.shape_base_cell_ratio
         if isinstance(value, str):
-            if "%" in value:
-                size = grid.cfg.cell_size * float(value[:-1]) / 100
-            elif "px" in value:
-                size = grid.cfg.cell_size * float(value[:-2])
+            size = grid.cfg.cell_size * str_to_number(value)
         elif isinstance(value, int) or isinstance(value, float):
             size = value
         return size
 
     @classmethod
     def from_cfg(cls, key: str, grid: Grid, value: Any = None, default: Any = None):
+        """
+        Multi-level value getter, the first value found (e.g. not None) in the given list will be returned:
+        1. provided value in the arguments.
+        2. grid config's dictionary key.
+        3. default value.
+
+        :param key: key to get from the grid configuration's dictionary
+        :param grid: grid to get the configuration from
+        :param value: current value to be returned with priority
+        :param default: default value to be returned if all else fails
+        :return: the first value which is not None, default value otherwise.
+        """
         nvalue = value
         if not value:
             nvalue = grid.cfg.__dict__.get(key, value)
@@ -223,25 +281,15 @@ class SVGExporter(Exporter):
 
     @classmethod
     def from_cell_cfg(cls, key: str, cell: Cell, value: Any = None):
+        """
+        Gets the value provided or the given cell configuration's dictionary's value if the former is None.
+
+        :param key: cell's configuration's key to get the value from
+        :param cell: cell to get the configuration from
+        :param value: current value to be returned with priority 
+        :return: the provided value if not None, cell configuration's dictionary's key otherwise
+        """
         nvalue = value
         if not value:
             nvalue = cell.__dict__.get(key, value)
         return nvalue
-
-    def rotate_arrow(self, arrow_start: Position, arrow_end: Position, shape: Shape, grid: Grid, direction: Angle | None = None):
-        self._log.debug(
-            f"Arrow: before rotation {arrow_start}=>{arrow_end}, distance={arrow_start.distance(arrow_end)}"
-        )
-        # TODO Rotate
-        # if direction and direction != ORIENTATIONS.get(OrientationSymbol.TOP):
-        #     # Base orientation is towards the top
-        #     angle: Angle = direction - ORIENTATIONS[OrientationSymbol.TOP]
-        #     self._log.debug(f"rotation={angle}")
-        #     arrow_start = rotate(base_arrow_start, -angle, lambda x: round(x, 2))
-        # else:
-        arrow_start_rotated = arrow_start
-        arrow_end_rotated = arrow_end
-        self._log.debug(
-            f"Arrow: after rotation {arrow_start}=>{arrow_end}, distance={arrow_start.distance(arrow_end)}"
-        )
-        return arrow_start_rotated, arrow_end_rotated

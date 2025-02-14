@@ -1,2 +1,2 @@
 |2A{T}|
-|C{green,75%}|
+|C{green}|

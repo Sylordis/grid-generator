@@ -1,2 +1,2 @@
 A{Q}|A{T}|A{E}
-|C{green,75%}|
+|C{green}|

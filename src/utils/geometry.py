@@ -30,6 +30,10 @@ class Position:
             y = o(y)
         return self
 
+    @staticmethod
+    def both(value:float) -> Position:
+        return Position(value,value)
+
     def distance(self, p: Position):
         """
         Calculates the distance between this point and another.
@@ -40,6 +44,16 @@ class Position:
         return math.sqrt(math.pow(p.x - self.x, 2)) + math.sqrt(
             math.pow(p.y - self.y, 2)
         )
+
+    def __floordiv__(self, o):
+        npos = self
+        if isinstance(o, int) or isinstance(o, float):
+            npos = Position(self.x // o, self.y // o)
+        else:
+            raise ValueError(
+                f"Cannot divide {self.__class__.__name__} with anything other than a number."
+            )
+        return npos
 
     def __getitem__(self, items):
         ret = None
@@ -58,6 +72,7 @@ class Position:
         if isinstance(o, tuple):
             self.x += o[0]
             self.y += o[1]
+        return self
 
     def __iter__(self):
         yield self.x
@@ -78,6 +93,26 @@ class Position:
 
     def __repr__(self):
         return f"({self.x},{self.y})"
+
+    def __sub__(self, o):
+        npos = self
+        if isinstance(o, int) or isinstance(o, float):
+            npos = Position(self.x - o, self.y - o)
+        if isinstance(o, Position):
+            npos = Position(self.x - o.x, self.y - o.y)
+        if isinstance(o, tuple) or isinstance(o, list):
+            npos = Position(self.x - o[0], self.y - o[1])
+        return npos
+
+    def __truediv__(self, o):
+        npos = self
+        if isinstance(o, int) or isinstance(o, float):
+            npos = Position(self.x / o, self.y / o)
+        else:
+            raise ValueError(
+                f"Cannot divide {self.__class__.__name__} with anything other than a number."
+            )
+        return npos
 
 
 class AngleMeasurement(StrEnum):

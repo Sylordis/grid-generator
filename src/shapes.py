@@ -20,6 +20,7 @@ class Shape(ABC):
 @dataclass
 class Arrow(Shape):
     orientation: OrientationSymbol | None = None
+    width: Any = None
 
 
 @dataclass
