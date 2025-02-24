@@ -31,8 +31,8 @@ class Position:
         return self
 
     @staticmethod
-    def both(value:float) -> Position:
-        return Position(value,value)
+    def both(value: float) -> Position:
+        return Position(value, value)
 
     def distance(self, p: Position):
         """
@@ -116,7 +116,7 @@ class Position:
 
 
 class AngleMeasurement(StrEnum):
-    DEGREES = "degrees",
+    DEGREES = ("degrees",)
     RADIANS = "radians"
 
 

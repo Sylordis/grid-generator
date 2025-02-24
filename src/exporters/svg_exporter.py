@@ -33,7 +33,7 @@ class SVGExporterCfg:
     "Arrows configuration."
     circles: SVGCircleCfg | None = field(default=SVGCircleCfg())
     "Circles configuration."
-    shape_base_cell_ratio: Any = '80%'
+    shape_base_cell_ratio: Any = "80%"
     "Base ratio for a shape width according to cell size."
     starting_angle = Angle(0)
     "Starting angle for all shapes."
@@ -159,7 +159,7 @@ class SVGExporter(Exporter):
         shape_id: str | None = None,
     ) -> SVGElementCreation:
         eid = "arrow-head"
-        shape_color = self.from_cfg("shapes_fill", grid, shape.fill)
+        shape_color = grid.cfg.extract("shapes_fill", shape.fill)
         head_path = svg.Path(fill=shape_color, d="M0,0 V4 L2,2 Z")
         marker = svg.Marker(
             id=eid,
@@ -172,36 +172,45 @@ class SVGExporter(Exporter):
         )
         defs = {eid: marker}
         cell_center = self.calculate_cell_center(grid, cell_pos)
-        cell_bounds = [cell_center - Position.both(grid.cfg.cell_size/2), cell_center + Position.both(grid.cfg.cell_size/2)]
+        cell_bounds = [
+            cell_center - Position.both(grid.cfg.cell_size / 2),
+            cell_center + Position.both(grid.cfg.cell_size / 2),
+        ]
         self._log.debug(
             f"Cell: pos={cell_pos} center:{cell_center}, size={grid.cfg.cell_size}, bounds={cell_bounds}"
         )
         # Create arrow
         arrow_length_full = self.calculate_size(grid, shape.width)
         # The ends of the arrow are created around (0,0) directly, just need to add cell_center to them after rotation.
-        arrow_start = Position(-arrow_length_full/2, 0)
-        arrow_end = Position(round(arrow_length_full/2 - self.exporter_cfg.arrows.head_length, 2), 0)
+        arrow_start = Position(-arrow_length_full / 2, 0)
+        arrow_end = Position(
+            round(arrow_length_full / 2 - self.exporter_cfg.arrows.head_length, 2), 0
+        )
         self._log.debug(
             f"Arrow: base {arrow_start}=>{arrow_end}, length_full={arrow_length_full} (supposed={grid.cfg.cell_size * str_to_number(self.exporter_cfg.shape_base_cell_ratio)}), distance={arrow_start.distance(arrow_end)}"
         )
         # Rotate
-        if shape.orientation != self.exporter_cfg.starting_angle:
-            angle: Angle = shape.orientation - self.exporter_cfg.starting_angle
-            self._log.debug(f"rotation={angle}")
+        desired_angle = grid.cell(cell_pos[0], cell_pos[1]).extract(
+            "orientation", shape.orientation, self.exporter_cfg.starting_angle
+        )
+        current_angle = self.exporter_cfg.starting_angle
+        self._log.debug(f"Arrow rotation: {current_angle} => {desired_angle}")
+        if (
+            shape.orientation is not None
+            and shape.orientation != self.exporter_cfg.starting_angle
+        ):
+            angle: Angle = desired_angle - self.exporter_cfg.starting_angle
             arrow_start = rotate(arrow_start, angle, lambda x: round(x, 2))
             arrow_end = rotate(arrow_end, angle, lambda x: round(x, 2))
-        # else:
-        self._log.debug(
-            f"Arrow: after rotation {arrow_start}=>{arrow_end} distance={arrow_start.distance(arrow_end)}"
-        )
+            self._log.debug(
+                f"Arrow rotation: after {arrow_start}=>{arrow_end} distance={arrow_start.distance(arrow_end)}"
+            )
         # Re-center in the middle of the cell
         arrow_start = cell_center + arrow_start
         arrow_end = cell_center + arrow_end
         # TODO apply translation if needed
         # https://math.stackexchange.com/questions/2204520/how-do-i-rotate-a-line-segment-in-a-specific-point-on-the-line
-        self._log.debug(
-            f"Arrow: final {arrow_start}=>{arrow_end}, fill={shape_color}"
-        )
+        self._log.debug(f"Arrow: final {arrow_start}=>{arrow_end}, fill={shape_color}")
         shape_id = "" if shape_id is None else shape_id
         elts = [
             svg.Path(
@@ -226,7 +235,7 @@ class SVGExporter(Exporter):
         shape_center = self.calculate_cell_center(grid, cell_pos)
         if translation:
             shape_center += translation
-        shape_color = self.from_cfg("shapes_fill", grid, shape.fill)
+        shape_color = grid.extract("shapes_fill", shape.fill)
         radius = self.calculate_size(grid, shape.width) / 2
         self._log.debug(
             f"Circle=((cx,cy)={shape_center}, r={radius}, fill={shape_color})"
@@ -234,7 +243,10 @@ class SVGExporter(Exporter):
         return {}, [
             svg.Circle(
                 id=shape_id,
-                cx=shape_center[0], cy=shape_center[1], fill=shape_color, r=radius
+                cx=shape_center[0],
+                cy=shape_center[1],
+                fill=shape_color,
+                r=radius,
             )
         ]
 
@@ -251,39 +263,3 @@ class SVGExporter(Exporter):
         elif isinstance(value, int) or isinstance(value, float):
             size = value
         return size
-
-    @classmethod
-    def from_cfg(cls, key: str, grid: Grid, value: Any = None, default: Any = None):
-        """
-        Multi-level value getter, the first value found (e.g. not None) in the given list will be returned:
-        1. provided value in the arguments.
-        2. grid config's dictionary key.
-        3. default value.
-
-        :param key: key to get from the grid configuration's dictionary
-        :param grid: grid to get the configuration from
-        :param value: current value to be returned with priority
-        :param default: default value to be returned if all else fails
-        :return: the first value which is not None, default value otherwise.
-        """
-        nvalue = value
-        if not value:
-            nvalue = grid.cfg.__dict__.get(key, value)
-        if not nvalue:
-            nvalue = default
-        return nvalue
-
-    @classmethod
-    def from_cell_cfg(cls, key: str, cell: Cell, value: Any = None):
-        """
-        Gets the value provided or the given cell configuration's dictionary's value if the former is None.
-
-        :param key: cell's configuration's key to get the value from
-        :param cell: cell to get the configuration from
-        :param value: current value to be returned with priority 
-        :return: the provided value if not None, cell configuration's dictionary's key otherwise
-        """
-        nvalue = value
-        if not value:
-            nvalue = cell.__dict__.get(key, value)
-        return nvalue

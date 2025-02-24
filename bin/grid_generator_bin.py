@@ -33,6 +33,12 @@ class ArgParser:
             help="Destination directory where to generate the images.",
             metavar="PATH",
         )
+        self.parser.add_argument(
+            "--no-export",
+            action="store_false",
+            dest="do_export",
+            help="Prevents any export"
+        )
 
     def parse(self):
         return self.parser.parse_args()
@@ -46,7 +52,7 @@ def main():
     logging.basicConfig(
         level=getattr(logging, args.loglevel.upper(), None), format=log_format
     )
-    draw_tool = GridDrawingTool()
+    draw_tool = GridDrawingTool(cfg = args)
     if args.dist:
         draw_tool.dist_dir = Path(args.dist)
     draw_tool.draw_all(args.input_file)

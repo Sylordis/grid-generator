@@ -18,4 +18,3 @@ def str_to_number(value) -> float:
     elif isinstance(value, int) or isinstance(value, float):
         ret = value
     return ret
-

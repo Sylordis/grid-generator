@@ -1,26 +1,28 @@
 from dataclasses import dataclass, field
+from typing import Any
 
 from .shapes import Shape
 from .utils.color import Color
 from .utils.geometry import Angle
+from .utils.searchable import Searchable
 
 
 @dataclass
-class Cell:
+class Cell(Searchable):
     """
     Programmative representation of a cell.
     """
 
     bg_color = None
     "Background colour of the cell."
-    content: list[Shape] = field(default_factory=list)
+    content: list[Shape] = field(default_factory=list, repr=False)
     "Content of the cell."
     orientation: Angle | None = None
     "Global orientation of the content of the cell."
 
 
 @dataclass
-class GridConfig:
+class GridConfig(Searchable):
     """
     Global configuration of the grid.
     """
