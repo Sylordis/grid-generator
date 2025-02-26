@@ -26,15 +26,18 @@ class GridDrawingTool:
     Main class to draw grids and arrows.
     """
 
-    def __init__(self, dist_dir: Path | None = None, cfg=None):
+    def __init__(self, dist_dir: Path | None = None, cfg = None):
         """
         Creates a new drawing tool.
 
         :param dist_dir: destination dir for generating the images
         """
         self._log = logging.getLogger()
+        "Class logger."
         self.dist_dir: Path | None = dist_dir
+        "Destination directory."
         self.cfg = cfg
+        "Drawing tool configuration."
 
     def draw_all(self, files_str: list[str], cfg: GridConfig = None):
         """
@@ -57,6 +60,8 @@ class GridDrawingTool:
                 dist_file = dist_file / f"{src_file.name}"
                 dist_file = dist_file.with_suffix(".svg")
                 files.append((src_file, dist_file))
+        if self.dist_dir:
+            self._log.info(f"Output dir: {self.dist_dir}")
         # Draw
         for input, output in files:
             grid_config = GridConfig() if cfg is None else cfg
@@ -68,15 +73,17 @@ class GridDrawingTool:
 
         :param input_file: input text file
         :param output_file: output image file
+        :param cfg: grid configuration
         """
         self._log.debug(f"{input_file.resolve()} => {output_file.resolve()}")
+        self._log.info(f"Input: {input_file.name}")
         grid = self.parse_grid_file(input_file)
         grid.cfg = cfg
         self._log.debug(self.cfg)
         if self.cfg.do_export:
             exporter: Exporter = SVGExporter()
             exporter.export(grid, output_file)
-            self._log.info(f"{input_file.name} => {output_file.name}")
+            self._log.info(f"Output generated: {output_file.name}")
         else:
             self._log.info("Export was cancelled (--no-export).")
 

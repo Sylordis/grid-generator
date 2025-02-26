@@ -52,20 +52,28 @@ class SVGExporter(Exporter):
     def export(self, grid: Grid, output_file: Path):
         self._log.debug(f"Creating grid image to {output_file}")
         heightn = len(grid.content)
-        widthn = len(grid.content[0])
+        widthn = max(len(x) for x in grid.content)
         height_img = heightn * grid.cfg.cell_size + grid.cfg.border_width
         width_img = widthn * grid.cfg.cell_size + grid.cfg.border_width
-        self._log.debug(
+        self._log.info(
             f"Grid size: {widthn}x{heightn} => Image size: {width_img}x{height_img} px"
         )
         def_elements: dict[str, list[svg.Element]] = {}
         elements: list[svg.Element] = []
         for defs, els in [
-            self.create_svg_grid(grid),
+            self.create_lower_shapes(grid),
             self.create_svg_elements_in_grid(grid),
         ]:
             elements.extend(els)
             def_elements.update(defs)
+        # Add SVG element and def for the grid, either after if supposed to be over other shapes or
+        # before if under.
+        defs, els = self.create_svg_grid(grid)
+        def_elements.update(defs)
+        if grid.cfg.grid_over_components:
+            elements.extend(els)
+        else:
+            elements = els + elements
         self._log.debug(f"Definitions: {def_elements.keys()}")
         elements.insert(0, svg.Defs(elements=[v for k, v in def_elements.items()]))
         canvas = svg.SVG(width=width_img, height=height_img, elements=elements)
@@ -95,6 +103,10 @@ class SVGExporter(Exporter):
         )
         rect = svg.Rect(width="100%", height="100%", fill="url(#grid)")
         return {"grid": svg_pattern}, [rect]
+
+    def create_lower_shapes(self, grid: Grid) -> SVGElementCreation:
+        # TODO Cell fills
+        return {}, []
 
     def create_svg_elements_in_grid(self, grid: Grid) -> SVGElementCreation:
         """

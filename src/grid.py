@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 
+
 from .shapes import Shape
 from .utils.color import Color
 from .utils.geometry import Angle, Position
@@ -41,6 +42,8 @@ class GridConfig(Searchable):
     "Border width (in px)."
     cell_size: int = 16
     "Size of the grid cells (in pixels)."
+    grid_over_components:bool = True
+    "Whether the grid is displayed on top of the components (True, default) or under (False)."
     shapes_fill: Color = Color("#FF0000")
     "Default colour of the objects in the grid."
 
@@ -60,7 +63,14 @@ class Grid:
         if self.cfg is None:
             self.cfg = GridConfig()
 
-    def cell(self, col_or_pos: int|Position, row: int = -1) -> Cell:
+    def cell(self, col_or_pos: int|Position, row: int = -1) -> Cell | None:
+        """
+        Gets a cell of the grid. As in arrays, numerotation starts at 0.
+
+        :param col_or_pos: either the column number or an (x,y) coordinate.
+        :param row: row number, not used if col_or_pos is a Position.
+        :return: the corresponding cell or None if the type of the first parameter is neither int nor Position.
+        """
         if isinstance(col_or_pos, int):
             return self.content[row][col_or_pos]
         elif isinstance(col_or_pos, Position):
