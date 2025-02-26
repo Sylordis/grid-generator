@@ -111,7 +111,6 @@ class SVGExporter(Exporter):
                 # TODO calculate the translation of each shape according to cell orientation and number of shapes in the cell
                 # TODO Provide translation from here directly, then just apply it during shape creation
                 for shape in grid.content[row][col].content:
-                    self._log.debug(shape)
                     defs, elts = self.create_element(
                         shape, grid, Position(col, row), shape_index=shape_index
                     )
@@ -190,14 +189,14 @@ class SVGExporter(Exporter):
             f"Arrow: base {arrow_start}=>{arrow_end}, length_full={arrow_length_full} (supposed={grid.cfg.cell_size * str_to_number(self.exporter_cfg.shape_base_cell_ratio)}), distance={arrow_start.distance(arrow_end)}"
         )
         # Rotate
-        desired_angle = grid.cell(cell_pos[0], cell_pos[1]).extract(
+        desired_angle = grid.cell(cell_pos).extract(
             "orientation", shape.orientation, self.exporter_cfg.starting_angle
         )
         current_angle = self.exporter_cfg.starting_angle
         self._log.debug(f"Arrow rotation: {current_angle} => {desired_angle}")
         if (
-            shape.orientation is not None
-            and shape.orientation != self.exporter_cfg.starting_angle
+            desired_angle
+            and desired_angle != self.exporter_cfg.starting_angle
         ):
             angle: Angle = desired_angle - self.exporter_cfg.starting_angle
             arrow_start = rotate(arrow_start, angle, lambda x: round(x, 2))

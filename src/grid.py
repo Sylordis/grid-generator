@@ -1,9 +1,9 @@
 from dataclasses import dataclass, field
-from typing import Any
 
 from .shapes import Shape
 from .utils.color import Color
-from .utils.geometry import Angle
+from .utils.geometry import Angle, Position
+from .utils.layout import Layout
 from .utils.searchable import Searchable
 
 
@@ -17,8 +17,14 @@ class Cell(Searchable):
     "Background colour of the cell."
     content: list[Shape] = field(default_factory=list, repr=False)
     "Content of the cell."
+    layout: Layout | None = None
+    "Layout of the cell."
     orientation: Angle | None = None
     "Global orientation of the content of the cell."
+
+    def __post_init__(self):
+        if not self.layout:
+            self.layout = Layout()
 
 
 @dataclass
@@ -54,5 +60,10 @@ class Grid:
         if self.cfg is None:
             self.cfg = GridConfig()
 
-    def cell(self, col: int, row: int) -> Cell:
-        return self.content[row][col]
+    def cell(self, col_or_pos: int|Position, row: int = -1) -> Cell:
+        if isinstance(col_or_pos, int):
+            return self.content[row][col_or_pos]
+        elif isinstance(col_or_pos, Position):
+            return self.content[col_or_pos[1]][col_or_pos[0]]
+        else:
+            return None

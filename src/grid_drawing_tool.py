@@ -99,10 +99,6 @@ class GridDrawingTool:
                 for cell_str in cells_str:
                     cell = self.parse_cell(cell_str)
                     cells.append(cell)
-                    self._log.debug(cell)
-                    self._log.debug("Cell content:")
-                    for shape in cell.content:
-                        self._log.debug(f"{shape}")
                 grid.content.append(cells)
             return grid
 
@@ -153,7 +149,7 @@ class GridDrawingTool:
         if n:
             ni = int(n)
         if shape_cfg:
-            shape_cfg = shape_cfg[1:-1].split(GridSymbol.PARAMS_SEPARATOR)
+            shape_cfg = list(filter(None, shape_cfg.split(GridSymbol.PARAMS_SEPARATOR)))
         cfg = self.interpret_cfg(shape_cfg)
         self._log.debug(f"shape: x{ni}, {shape_id}, {shape_cfg}, {cfg}")
         match shape_id:
@@ -174,7 +170,8 @@ class GridDrawingTool:
         """
         cfg: dict[str, Any] = {}
         sizes = []
-        self._log.debug(cfg_txt)
+        colors = []
+        self._log.debug(f"cfg_txt={cfg_txt}")
         for param in cfg_txt:
             match = re.match("([a-z-]+)=(.*)", param)
             size_match = re.match("\d+(px|cm|em|%)", param)
@@ -185,7 +182,7 @@ class GridDrawingTool:
             elif size_match:
                 sizes.append(param)
             elif param in COLORS:
-                cfg["fill"] = param
+                colors.append(param)
             else:
                 self._log.debug(f"unknown cfg param=[{param}]")
         # Manage sizes
@@ -195,7 +192,10 @@ class GridDrawingTool:
             if "height" not in cfg:
                 cfg["height"] = sizes[0]
         elif len(sizes) > 1:
-            cfg["width"] = sizes[0]
-            cfg["height"] = sizes[1]
+            sizes = sizes + [None] * 2
+            cfg["width"], cfg["height"], *_ = sizes
+        if len(colors) > 0:
+            colors = colors + [None] * 2
+            cfg["fill"], cfg["border_color"], *_ = colors
         self._log.debug(f"cfg={cfg}")
         return cfg

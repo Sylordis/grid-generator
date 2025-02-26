@@ -135,6 +135,12 @@ class Angle:
             self._angle = angle * 180 / math.pi
         self._angle = angle % 360
 
+    def __eq__(self, o):
+        equal = False
+        if isinstance(o, Angle):
+            equal = self._angle == o._angle
+        return equal
+
     def __neg__(self):
         return Angle(-self._angle)
 

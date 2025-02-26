@@ -1,3 +1,4 @@
+import logging
 from typing import Any
 
 
@@ -25,6 +26,7 @@ class Searchable:
         :param default: default value to be returned if all else fails
         :return: the first value which is not None, default value otherwise.
         """
+        logging.getLogger().debug(f"extract {key} value={value}, dict={self.get(key, value)} default={default}")
         nvalue = value
         if not value:
             nvalue = self.get(key, value)
