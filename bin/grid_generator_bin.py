@@ -28,6 +28,12 @@ class ArgParser:
             default="info",
         )
         self.parser.add_argument(
+            "-c",
+            "--config",
+            metavar="FILE",
+            help="Configuration file for default values."
+        )
+        self.parser.add_argument(
             "-d",
             "--dist",
             help="Destination directory where to generate the images.",
@@ -53,6 +59,4 @@ def main():
         level=getattr(logging, args.loglevel.upper(), None), format=log_format
     )
     draw_tool = GridDrawingTool(cfg = args)
-    if args.dist:
-        draw_tool.dist_dir = Path(args.dist)
     draw_tool.draw_all(args.input_file)

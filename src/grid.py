@@ -42,8 +42,18 @@ class GridConfig(Searchable):
     "Border width (in px)."
     cell_size: int = 16
     "Size of the grid cells (in pixels)."
-    grid_over_components:bool = True
+    grid_over_components: bool = True
     "Whether the grid is displayed on top of the components (True, default) or under (False)."
+
+
+@dataclass
+class ShapesConfig(Searchable):
+
+    bg_color: Color = Color(1, 1, 1, 0)
+    "Color of the background."
+    border_color: Color = Color("#FF0000")
+    "Color of the grid border."
+    border_width: int = 1
     shapes_fill: Color = Color("#FF0000")
     "Default colour of the objects in the grid."
 
@@ -58,10 +68,14 @@ class Grid:
     "Content of the grid, 2D array of Cells."
     cfg: GridConfig | None = None
     "Configuration of the grid."
+    shapes_cfg: ShapesConfig | None = None
+    "Default configuration of the shapes."
 
     def __post_init__(self):
-        if self.cfg is None:
+        if not self.cfg:
             self.cfg = GridConfig()
+        if not self.shapes_cfg:
+            self.shapes_cfg = ShapesConfig()
 
     def cell(self, col_or_pos: int|Position, row: int = -1) -> Cell | None:
         """

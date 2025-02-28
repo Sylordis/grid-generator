@@ -15,10 +15,12 @@ from .utils.symbols import GridSymbol, OrientationSymbol, ShapeSymbol
 
 @dataclass
 class DrawToolConfig:
-    output_format = "SVG"
-    "Color mode for the image."
     dest_dir: Path | None = None
     "Destination directory for created images."
+    do_export: bool = True
+    "Perform the export if true."
+    output_format = "SVG"
+    "Color mode for the image."
 
 
 class GridDrawingTool:
@@ -26,7 +28,7 @@ class GridDrawingTool:
     Main class to draw grids and arrows.
     """
 
-    def __init__(self, dist_dir: Path | None = None, cfg = None):
+    def __init__(self, cfg = None, grid_cfg = None):
         """
         Creates a new drawing tool.
 
@@ -34,10 +36,22 @@ class GridDrawingTool:
         """
         self._log = logging.getLogger()
         "Class logger."
-        self.dist_dir: Path | None = dist_dir
-        "Destination directory."
-        self.cfg = cfg
+        self.cfg = DrawToolConfig()
         "Drawing tool configuration."
+        if cfg:
+            self._set_cfg(cfg)
+        self.grid_cfg = None
+        "Overall grid configuration."
+
+    def _set_cfg(self, cfg):
+        """
+        Sets the configuration.
+        """
+        if cfg.dist:
+            self.cfg.dist_dir = Path(cfg.dist)
+        if cfg.do_export:
+            self.cfg.do_export = cfg.do_export
+
 
     def draw_all(self, files_str: list[str], cfg: GridConfig = None):
         """

@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
-import logging
 from pathlib import Path
+import re
 import svg
 from typing import TypeAlias, Any
 
@@ -61,7 +61,7 @@ class SVGExporter(Exporter):
         def_elements: dict[str, list[svg.Element]] = {}
         elements: list[svg.Element] = []
         for defs, els in [
-            self.create_lower_shapes(grid),
+            self.create_bg_shapes(grid),
             self.create_svg_elements_in_grid(grid),
         ]:
             elements.extend(els)
@@ -104,8 +104,14 @@ class SVGExporter(Exporter):
         rect = svg.Rect(width="100%", height="100%", fill="url(#grid)")
         return {"grid": svg_pattern}, [rect]
 
-    def create_lower_shapes(self, grid: Grid) -> SVGElementCreation:
-        # TODO Cell fills
+    def create_bg_shapes(self, grid: Grid) -> SVGElementCreation:
+        """
+        Creates background shapes, like cell filling.
+
+        :param grid: grid to create the svg elements from
+        :return: normal elements, defs elements
+        """
+        # TODO
         return {}, []
 
     def create_svg_elements_in_grid(self, grid: Grid) -> SVGElementCreation:
@@ -169,19 +175,7 @@ class SVGExporter(Exporter):
         translation: Position | None = None,
         shape_id: str | None = None,
     ) -> SVGElementCreation:
-        eid = "arrow-head"
-        shape_color = grid.cfg.extract("shapes_fill", shape.fill)
-        head_path = svg.Path(fill=shape_color, d="M0,0 V4 L2,2 Z")
-        marker = svg.Marker(
-            id=eid,
-            orient="auto",
-            markerWidth=self.exporter_cfg.arrows.head_length,
-            markerHeight="4",
-            refX="0.1",
-            refY="2",
-            elements=[head_path],
-        )
-        defs = {eid: marker}
+        shape_fill = grid.cfg.extract("shapes_fill", shape.fill)
         cell_center = self.calculate_cell_center(grid, cell_pos)
         cell_bounds = [
             cell_center - Position.both(grid.cfg.cell_size / 2),
@@ -191,7 +185,7 @@ class SVGExporter(Exporter):
             f"Cell: pos={cell_pos} center:{cell_center}, size={grid.cfg.cell_size}, bounds={cell_bounds}"
         )
         # Create arrow
-        arrow_length_full = self.calculate_size(grid, shape.width)
+        arrow_length_full = self.calculate_size_based_on_cell(grid, shape.width)
         # The ends of the arrow are created around (0,0) directly, just need to add cell_center to them after rotation.
         arrow_start = Position(-arrow_length_full / 2, 0)
         arrow_end = Position(
@@ -221,15 +215,29 @@ class SVGExporter(Exporter):
         arrow_end = cell_center + arrow_end
         # TODO apply translation if needed
         # https://math.stackexchange.com/questions/2204520/how-do-i-rotate-a-line-segment-in-a-specific-point-on-the-line
-        self._log.debug(f"Arrow: final {arrow_start}=>{arrow_end}, fill={shape_color}")
+        self._log.debug(f"Arrow: final {arrow_start}=>{arrow_end}, fill={shape_fill}")
+        # Create SVG definition for head
+        head_path = svg.Path(fill=shape_fill, d="M0,0 V4 L2,2 Z")
+        head_def_id = f"arrow-head-{self.normalize_id(shape_fill)}-{self.normalize_id(arrow_length_full)}"
+        marker = svg.Marker(
+            id=head_def_id,
+            orient="auto",
+            markerWidth=self.exporter_cfg.arrows.head_length,
+            markerHeight="4",
+            refX="0.1",
+            refY="2",
+            elements=[head_path],
+        )
+        defs = {head_def_id: marker}
+        # Create SVG element for the arrow
         shape_id = "" if shape_id is None else shape_id
         elts = [
             svg.Path(
                 id=shape_id,
-                marker_end=f"url(#{eid})",
+                marker_end=f"url(#{head_def_id})",
                 stroke_width="2",
-                fill=shape_color,
-                stroke=shape_color,
+                fill=shape_fill,
+                stroke=shape_fill,
                 d=f"M {arrow_start[0]},{arrow_start[1]} {arrow_end[0]},{arrow_end[1]}",
             )
         ]
@@ -247,7 +255,7 @@ class SVGExporter(Exporter):
         if translation:
             shape_center += translation
         shape_color = grid.extract("shapes_fill", shape.fill)
-        radius = self.calculate_size(grid, shape.width) / 2
+        radius = self.calculate_size_based_on_cell(grid, shape.width) / 2
         self._log.debug(
             f"Circle=((cx,cy)={shape_center}, r={radius}, fill={shape_color})"
         )
@@ -265,7 +273,7 @@ class SVGExporter(Exporter):
         pos = [pos * grid.cfg.cell_size + grid.cfg.cell_size / 2 for pos in cell_pos]
         return Position(pos[0], pos[1])
 
-    def calculate_size(self, grid: Grid, value) -> float:
+    def calculate_size_based_on_cell(self, grid: Grid, value) -> float:
         size = 0
         if value is None:
             value = self.exporter_cfg.shape_base_cell_ratio
@@ -274,3 +282,14 @@ class SVGExporter(Exporter):
         elif isinstance(value, int) or isinstance(value, float):
             size = value
         return size
+
+    def calculate_size(self, grid: Grid, *args) -> float:
+        """
+        Calculates a size based on multiple factors.
+        """
+        pass
+
+    @classmethod
+    def normalize_id(cls, s:str):
+        o = str(s)
+        return re.sub('[^a-zA-Z0-9]', '-', o)

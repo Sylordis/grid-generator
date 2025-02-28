@@ -12,7 +12,7 @@ class LayoutDisplayType(StrEnum):
   HORIZONTAL = "horizontal"
   "Layout will be strictly horizontal (along X axis)."
   STACKED = "stacked"
-  "All shapes will be stacked upon each other."
+  "All shapes will be stacked upon each other (default)."
   SQUARE = "square"
   "Layout will be going equally between X and Y axis."
   VERTICAL = "vertical"
@@ -21,30 +21,20 @@ class LayoutDisplayType(StrEnum):
 
 class LayoutDirectionHorizontal(StrEnum):
   LEFT_TO_RIGHT = "ltr"
+  "Elements will be layout from left to right."
   RIGHT_TO_LEFT = "rtl"
+  "Elements will be layout from right to left."
 
 
 class LayoutDirectionVertical(StrEnum):
   BOTTOM_TO_TOP = "btt"
+  "Elements will be layout from bottom to top."
   TOP_TO_BOTTOM = "ttb"
-
-
-class HorizontalAlign(StrEnum):
-  LEFT = "left"
-  CENTER = "center"
-  RIGHT = "right"
-
-
-class VerticalAlign(StrEnum):
-  BOTTOM = "bottom"
-  CENTER = "center"
-  TOP = "top"
+  "Elements will be layout from top to bottom."
 
 
 @dataclass
 class Layout(Searchable):
-  align: HorizontalAlign = HorizontalAlign.CENTER
-  display_type: LayoutDisplayType = LayoutDisplayType.HORIZONTAL
+  display_type: LayoutDisplayType = LayoutDisplayType.STACKED
   hdir: LayoutDirectionHorizontal = LayoutDirectionHorizontal.LEFT_TO_RIGHT
-  valign: VerticalAlign = VerticalAlign.CENTER
   vdir: LayoutDirectionVertical = LayoutDirectionVertical.TOP_TO_BOTTOM

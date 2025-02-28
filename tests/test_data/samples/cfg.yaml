@@ -1,0 +1,4 @@
+cfg:
+  arrows:
+    border_width: 1
+    fill: #ff0000
