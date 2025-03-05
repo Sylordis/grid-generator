@@ -1,6 +1,7 @@
 from __future__ import annotations
 from dataclasses import dataclass
 from enum import StrEnum
+from itertools import zip_longest
 import math
 from typing import Callable
 
@@ -8,31 +9,51 @@ from typing import Callable
 from .symbols import OrientationSymbol
 
 
-@dataclass
 class Position:
 
-    x: float
-    y: float
+    def __init__(self, *values):
+        self.coords = list(values)
+
+    @property
+    def x(self):
+        return self.coords[0]
+
+    @property
+    def y(self):
+        return self.coords[1]
+
+    @property
+    def z(self):
+        return self.coords[2]
 
     def __add__(self, o):
         npos = self
-        if isinstance(o, int) or isinstance(o, float):
-            npos = Position(self.x + o, self.y + o)
-        if isinstance(o, Position):
-            npos = Position(self.x + o.x, self.y + o.y)
-        if isinstance(o, tuple) or isinstance(o, list):
-            npos = Position(self.x + o[0], self.y + o[1])
+        if isinstance(o, (int, float)):
+            npos = Position(*[v + o for v in self.coords])
+        if isinstance(o, (list, Position, tuple)):
+            npos = Position(*[a + b for a, b in zip_longest(self.coords, o.coords, fillvalue=0)])
         return npos
 
     def __and__(self, o):
+        npos = self
         if callable(o):
-            x = o(x)
-            y = o(y)
-        return self
+            npos = Position(*[o(v) for v in self.coords])
+        return npos
+
+    def apply(self, converter: Callable[[float],float]) -> Position:
+        """
+        Applies a number converter to all coordinates of this position.
+
+        :param converter: a converter to apply to both coordinates
+        :return: a new position where the converter has been applied to both coordinates.
+        """
+        return self.__and__(converter)
 
     @staticmethod
-    def both(value: float) -> Position:
-        return Position(value, value)
+    def all(value, length=2) -> Position:
+        if not isinstance(value, (float, int)):
+            raise ValueError("Provided value must be a number (int or float)")
+        return Position(*[value] * length)
 
     def distance(self, p: Position):
         """
@@ -45,74 +66,62 @@ class Position:
             math.pow(p.y - self.y, 2)
         )
 
+    def __eq__(self, o) -> bool:
+        if isinstance(o, Position):
+            return all(a == b for a,b in zip_longest(self.coords, o.coords, fillvalue=0))
+        elif isinstance(o, (list, tuple)):
+            return all(a == b for a,b in zip_longest(self.coords, o, fillvalue=0))
+        else:
+            return False
+
     def __floordiv__(self, o):
-        npos = self
-        if isinstance(o, int) or isinstance(o, float):
-            npos = Position(self.x // o, self.y // o)
+        if isinstance(o, (float, int)):
+            return Position(*[v // o for v in self.coords])
         else:
             raise ValueError(
                 f"Cannot divide {self.__class__.__name__} with anything other than a number."
             )
-        return npos
 
     def __getitem__(self, items):
         ret = None
-        values = [self.x, self.y]
         if isinstance(items, int) or isinstance(items, slice):
-            ret = values[items]
+            ret = self.coords[items]
         return ret
 
     def __iadd__(self, o):
-        if isinstance(o, int) or isinstance(o, float):
-            self.x += o
-            self.y += o
-        if isinstance(o, Position):
-            self.x += o.x
-            self.y += o.y
-        if isinstance(o, tuple):
-            self.x += o[0]
-            self.y += o[1]
+        if isinstance(o, (float, int)):
+            self.coords = [v + o for v in self.coords]
+        if isinstance(o, (list, Position, tuple)):
+            self.coords = [s + v for s,v in zip_longest(self, o, fillvalue=0)]
         return self
 
     def __iter__(self):
-        yield self.x
-        yield self.y
+        yield from self.coords
 
     def __mul__(self, o):
-        npos = self
-        if isinstance(o, int) or isinstance(o, float):
-            npos = Position(self.x * o, self.y * o)
+        if isinstance(o, (float, int)):
+            return Position(*[v * o for v in self.coords])
         else:
             raise ValueError(
                 f"Cannot multiply {self.__class__.__name__} with anything other than a number."
             )
-        return npos
 
     def __neg__(self):
-        return Position(-self.x, -self.y)
+        return Position(*[-v for v in self.coords])
 
     def __repr__(self):
-        return f"({self.x},{self.y})"
+        return f"({",".join(map(str, self.coords))})"
 
     def __sub__(self, o):
-        npos = self
-        if isinstance(o, int) or isinstance(o, float):
-            npos = Position(self.x - o, self.y - o)
-        if isinstance(o, Position):
-            npos = Position(self.x - o.x, self.y - o.y)
-        if isinstance(o, tuple) or isinstance(o, list):
-            npos = Position(self.x - o[0], self.y - o[1])
-        return npos
+        return self.__add__(-o)
 
     def __truediv__(self, o):
-        npos = self
-        if isinstance(o, int) or isinstance(o, float):
-            npos = Position(self.x / o, self.y / o)
+        if isinstance(o, (float, int)):
+            return Position(*[v / o for v in self.coords])
         else:
             raise ValueError(
                 f"Cannot divide {self.__class__.__name__} with anything other than a number."
             )
-        return npos
 
 
 class AngleMeasurement(StrEnum):
@@ -129,11 +138,10 @@ class Angle:
         self, angle: float, angle_type: AngleMeasurement = AngleMeasurement.DEGREES
     ):
         "Angle in degrees."
-        if angle_type == AngleMeasurement.DEGREES:
-            self._angle = angle
+        if angle_type == AngleMeasurement.DEGREES or not angle_type:
+            self._angle = angle % 360
         else:
             self._angle = angle * 180 / math.pi
-        self._angle = angle % 360
 
     def __eq__(self, o):
         equal = False
@@ -167,7 +175,7 @@ class Angle:
 
 
 def rotate(
-    xy: Position, angle: Angle, normaliser: Callable[[float], float] | None = None
+    xy: Position, angle: Angle
 ) -> Position:
     """
     Performs a rotation of the given position compared to the origin.
@@ -181,9 +189,6 @@ def rotate(
     degrees = angle.degrees / 180
     xn = x * math.cos(degrees * math.pi) - y * math.sin(degrees * math.pi)
     yn = x * math.sin(degrees * math.pi) + y * math.cos(degrees * math.pi)
-    if normaliser:
-        xn = normaliser(xn)
-        yn = normaliser(yn)
     return Position(xn, yn)
 
 

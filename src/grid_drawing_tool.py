@@ -1,3 +1,4 @@
+from colour import Color
 from dataclasses import dataclass
 import logging
 from pathlib import Path
@@ -8,7 +9,6 @@ from typing import Any
 from .exporters import Exporter, SVGExporter
 from .grid import Cell, Grid, GridConfig
 from .shapes import Shape, Arrow, Circle
-from .utils.color import COLORS
 from .utils.geometry import ORIENTATIONS
 from .utils.symbols import GridSymbol, OrientationSymbol, ShapeSymbol
 
@@ -52,7 +52,6 @@ class GridDrawingTool:
         if cfg.do_export:
             self.cfg.do_export = cfg.do_export
 
-
     def draw_all(self, files_str: list[str], cfg: GridConfig = None):
         """
         Tries to draw all provided files.
@@ -69,13 +68,13 @@ class GridDrawingTool:
                 self._log.warning(f"File '{src_file}' does not exist. Skipping.")
             else:
                 dist_file = (
-                    self.dist_dir if self.dist_dir is not None else src_file.parent
+                    self.cfg.dist_dir if self.cfg.dist_dir is not None else src_file.parent
                 )
                 dist_file = dist_file / f"{src_file.name}"
                 dist_file = dist_file.with_suffix(".svg")
                 files.append((src_file, dist_file))
-        if self.dist_dir:
-            self._log.info(f"Output dir: {self.dist_dir}")
+        if self.cfg.dist_dir:
+            self._log.info(f"Output dir: {self.cfg.dist_dir}")
         # Draw
         for input, output in files:
             grid_config = GridConfig() if cfg is None else cfg
@@ -196,14 +195,18 @@ class GridDrawingTool:
         for param in cfg_txt:
             match = re.match("([a-z-]+)=(.*)", param)
             size_match = re.match("\d+(px|cm|em|%)", param)
+            try:
+                color = Color(param)
+            except ValueError:
+                color = None
             if match:
                 cfg[match.group(1).replace("-", "_")] = match.group(2)
             elif param in [e.value for e in OrientationSymbol]:
                 cfg["orientation"] = ORIENTATIONS.get(param)
             elif size_match:
                 sizes.append(param)
-            elif param in COLORS:
-                colors.append(param)
+            elif color:
+                colors.append(color)
             else:
                 self._log.debug(f"unknown cfg param=[{param}]")
         # Manage sizes

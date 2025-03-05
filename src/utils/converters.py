@@ -1,3 +1,18 @@
+from typing import Callable, Any
+
+
+def is_percentile(value) -> bool:
+    """
+    Takes a value and check if it's a percentile number.
+    This method will consider any string with a "%" or any number between 1 and 0 as
+    being percentile.
+
+    :param value: a value to check if it is percentile
+    :return: True if the value is a string and contains "%" or if it is between 1 and 0,
+    false otherwise.
+    """
+    return isinstance(value, str) and "%" in value or isinstance(value, (int, float)) and 0 <= value <= 1
+
 def str_to_number(value) -> float:
     """
     Takes a string measurement and converts it to an actual value.
@@ -15,6 +30,16 @@ def str_to_number(value) -> float:
             ret = float(value[:-1]) / 100
         elif "px" in value:
             ret = float(value[:-2])
+        else:
+            ret = float(value)
     elif isinstance(value, int) or isinstance(value, float):
         ret = value
     return ret
+
+
+class Converters:
+
+    @staticmethod
+    def to_float(precision: int) -> Callable[[Any],float]:
+        "Float converter to reduce to a specific precision."
+        return lambda x: round(x, precision)

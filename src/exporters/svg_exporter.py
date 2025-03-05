@@ -7,20 +7,26 @@ from typing import TypeAlias, Any
 from .exporter import Exporter
 from ..grid import Grid, GridConfig, Cell
 from ..shapes import Shape, Arrow, Circle
-from ..utils.converters import str_to_number
+from ..utils.converters import str_to_number, Converters
 from ..utils.geometry import Angle, Position, ORIENTATIONS, OrientationSymbol, rotate
 
 
 SVGElementCreation: TypeAlias = tuple[dict[str, list[svg.Element]], list[svg.Element]]
+"""
+Type representing the produced result of creating SVG elements, with a dictionary for definitions,
+and a list for created SVG normal elements.
+"""
 
 
 @dataclass(frozen=True)
 class SVGCircleCfg:
+    "Basic configuration for SVG Circle elements."
     pass
 
 
 @dataclass(frozen=True)
 class SVGArrowCfg:
+    "Basic configuration for SVG Arrow (Path + head) elements."
 
     head_length: float = 3
     "Head length."
@@ -28,6 +34,7 @@ class SVGArrowCfg:
 
 @dataclass(frozen=True)
 class SVGExporterCfg:
+    "Configuration for the exporter itself."
 
     arrows: SVGArrowCfg | None = field(default=SVGArrowCfg())
     "Arrows configuration."
@@ -175,17 +182,18 @@ class SVGExporter(Exporter):
         translation: Position | None = None,
         shape_id: str | None = None,
     ) -> SVGElementCreation:
-        shape_fill = grid.cfg.extract("shapes_fill", shape.fill)
-        cell_center = self.calculate_cell_center(grid, cell_pos)
+        shape_fill = grid.shapes_cfg.extract("fill", shape.fill)
+        cell_center = grid.calculate_cell_center(cell_pos)
         cell_bounds = [
-            cell_center - Position.both(grid.cfg.cell_size / 2),
-            cell_center + Position.both(grid.cfg.cell_size / 2),
+            cell_center - Position.all(grid.cfg.cell_size / 2),
+            cell_center + Position.all(grid.cfg.cell_size / 2),
         ]
         self._log.debug(
             f"Cell: pos={cell_pos} center:{cell_center}, size={grid.cfg.cell_size}, bounds={cell_bounds}"
         )
         # Create arrow
-        arrow_length_full = self.calculate_size_based_on_cell(grid, shape.width)
+        arrow_length_full = grid.calculate_size(shape.width, base = self.exporter_cfg.shape_base_cell_ratio)
+        self._log.debug(f"Arrow_length_full={arrow_length_full}, {shape.width}, base={self.exporter_cfg.shape_base_cell_ratio}")
         # The ends of the arrow are created around (0,0) directly, just need to add cell_center to them after rotation.
         arrow_start = Position(-arrow_length_full / 2, 0)
         arrow_end = Position(
@@ -205,14 +213,16 @@ class SVGExporter(Exporter):
             and desired_angle != self.exporter_cfg.starting_angle
         ):
             angle: Angle = desired_angle - self.exporter_cfg.starting_angle
-            arrow_start = rotate(arrow_start, angle, lambda x: round(x, 2))
-            arrow_end = rotate(arrow_end, angle, lambda x: round(x, 2))
+            arrow_start = rotate(arrow_start, angle)
+            arrow_end = rotate(arrow_end, angle)
             self._log.debug(
                 f"Arrow rotation: after {arrow_start}=>{arrow_end} distance={arrow_start.distance(arrow_end)}"
             )
         # Re-center in the middle of the cell
         arrow_start = cell_center + arrow_start
         arrow_end = cell_center + arrow_end
+        arrow_start = arrow_start.apply(Converters.to_float(2))
+        arrow_end = arrow_end.apply(Converters.to_float(2))
         # TODO apply translation if needed
         # https://math.stackexchange.com/questions/2204520/how-do-i-rotate-a-line-segment-in-a-specific-point-on-the-line
         self._log.debug(f"Arrow: final {arrow_start}=>{arrow_end}, fill={shape_fill}")
@@ -251,11 +261,11 @@ class SVGExporter(Exporter):
         translation: Position | None = None,
         shape_id: str | None = None,
     ) -> SVGElementCreation:
-        shape_center = self.calculate_cell_center(grid, cell_pos)
+        shape_center = grid.calculate_cell_center(cell_pos)
         if translation:
             shape_center += translation
-        shape_color = grid.extract("shapes_fill", shape.fill)
-        radius = self.calculate_size_based_on_cell(grid, shape.width) / 2
+        shape_color = grid.shapes_cfg.extract("fill", shape.fill)
+        radius = grid.calculate_size(shape.width, base = self.exporter_cfg.shape_base_cell_ratio) / 2
         self._log.debug(
             f"Circle=((cx,cy)={shape_center}, r={radius}, fill={shape_color})"
         )
@@ -268,26 +278,6 @@ class SVGExporter(Exporter):
                 r=radius,
             )
         ]
-
-    def calculate_cell_center(self, grid: Grid, cell_pos: Position) -> Position:
-        pos = [pos * grid.cfg.cell_size + grid.cfg.cell_size / 2 for pos in cell_pos]
-        return Position(pos[0], pos[1])
-
-    def calculate_size_based_on_cell(self, grid: Grid, value) -> float:
-        size = 0
-        if value is None:
-            value = self.exporter_cfg.shape_base_cell_ratio
-        if isinstance(value, str):
-            size = grid.cfg.cell_size * str_to_number(value)
-        elif isinstance(value, int) or isinstance(value, float):
-            size = value
-        return size
-
-    def calculate_size(self, grid: Grid, *args) -> float:
-        """
-        Calculates a size based on multiple factors.
-        """
-        pass
 
     @classmethod
     def normalize_id(cls, s:str):

@@ -1,8 +1,9 @@
+from colour import Color
 from dataclasses import dataclass, field
 
 
 from .shapes import Shape
-from .utils.color import Color
+from .utils.converters import is_percentile, str_to_number
 from .utils.geometry import Angle, Position
 from .utils.layout import Layout
 from .utils.searchable import Searchable
@@ -34,9 +35,9 @@ class GridConfig(Searchable):
     Global configuration of the grid.
     """
 
-    bg_color: Color = Color(1, 1, 1, 0)
+    bg_color: Color | None = None
     "Color of the background."
-    border_color: Color = Color("#000000")
+    border_color: Color | None = None
     "Color of the grid border."
     border_width: int = 1
     "Border width (in px)."
@@ -45,18 +46,31 @@ class GridConfig(Searchable):
     grid_over_components: bool = True
     "Whether the grid is displayed on top of the components (True, default) or under (False)."
 
+    def __post_init__(self):
+        if not self.bg_color:
+            self.bg_color = Color("#FFFFFF")
+        if not self.border_color:
+            self.border_color = Color("#000000")
+
 
 @dataclass
 class ShapesConfig(Searchable):
+    """
+    Global configuration of the shapes.
+    """
 
-    bg_color: Color = Color(1, 1, 1, 0)
-    "Color of the background."
-    border_color: Color = Color("#FF0000")
+    border_color: Color | None = None
     "Color of the grid border."
     border_width: int = 1
-    shapes_fill: Color = Color("#FF0000")
+    "Default border width."
+    fill: Color | None = None
     "Default colour of the objects in the grid."
 
+    def __post_init__(self):
+        if not self.border_color:
+            self.border_color = Color("#FF0000")
+        if not self.fill:
+            self.fill = Color("#FF0000")
 
 @dataclass
 class Grid:
@@ -91,3 +105,39 @@ class Grid:
             return self.content[col_or_pos[1]][col_or_pos[0]]
         else:
             return None
+
+    def calculate_cell_center(self, cell_pos: Position) -> Position:
+        """
+        Calculates the center of a given cell according to its configuration.
+
+        :param cell_pos: position of the cell in the grid
+        :return: a position with the exact center of the cell
+        """
+        pos = [pos * self.cfg.cell_size + self.cfg.cell_size / 2 for pos in cell_pos]
+        return Position(pos[0], pos[1])
+
+    def calculate_size(self, *factors, base = None) -> float:
+        """
+        Calculates a size based on multiple factors.
+        It will first try to multiply all factors together in provided order.
+        It will stop as soon as it hits a non-string and non-percentile factor.
+        Then if all factors were just percentile number or under 1, it will try to get the cell size
+        and multiply the factors product by the cell size.
+
+        :param factors: all factors to multiply together
+        :param base: base number, usually a percentile number
+        :return: a number
+        """
+        all_percentiles = True
+        value = 1
+        if base:
+            value *= str_to_number(base)
+        for f in factors:
+            if f:
+                value *= str_to_number(f)
+                if not is_percentile(f):
+                    all_percentiles = False
+                    break
+        if all_percentiles:
+            value *= self.cfg.cell_size
+        return float(value)

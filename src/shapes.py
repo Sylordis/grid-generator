@@ -1,9 +1,9 @@
 from abc import ABC
+from colour import Color
 from dataclasses import dataclass
 from typing import Any
 
 
-from .utils.color import Color
 from .utils.symbols import OrientationSymbol
 
 
