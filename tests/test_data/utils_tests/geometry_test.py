@@ -27,9 +27,9 @@ class TestPosition:
     @pytest.mark.parametrize(
         "position,converter,expected",
         [
-            (Position(0, 0), lambda x : x, Position(0, 0)),
-            (Position(0, 0), lambda x : x + 1, Position(1, 1)),
-            (Position(3.2, 4.56), lambda x : round(x, 0), Position(3, 5)),
+            (Position(0, 0), lambda x: x, Position(0, 0)),
+            (Position(0, 0), lambda x: x + 1, Position(1, 1)),
+            (Position(3.2, 4.56), lambda x: round(x, 0), Position(3, 5)),
         ],
     )
     def test_and(self, position, converter, expected):
@@ -47,7 +47,6 @@ class TestPosition:
     )
     def test_getitem(self, pos, s, expected):
         assert pos[s] == expected
-
 
     @pytest.mark.parametrize(
         "pos,expected",
@@ -72,7 +71,7 @@ class TestAngle:
             (45, math.pi / 4),
             (0, 0),
             (360, 2 * math.pi),
-            (-56, (360-56) * math.pi / 180),
+            (-56, (360 - 56) * math.pi / 180),
         ],
     )
     def test_init(self, degrees, radians):
@@ -81,43 +80,37 @@ class TestAngle:
         assert angle.radians == radians % (2 * math.pi)
 
     @pytest.mark.parametrize(
-            "angle,angle_type,expected",
-            [
-                (36, None, 36),
-                (720, None, 0),
-                (math.pi, AngleMeasurement.RADIANS, 180),
-                (3*math.pi/4, AngleMeasurement.RADIANS, 135),
-                (3*math.pi/2, AngleMeasurement.RADIANS, 270),
-            ]
+        "angle,angle_type,expected",
+        [
+            (36, None, 36),
+            (720, None, 0),
+            (math.pi, AngleMeasurement.RADIANS, 180),
+            (3 * math.pi / 4, AngleMeasurement.RADIANS, 135),
+            (3 * math.pi / 2, AngleMeasurement.RADIANS, 270),
+        ],
     )
     def test_eq(self, angle, angle_type, expected):
         assert Angle(angle, angle_type) == Angle(expected)
 
-    @pytest.mark.parametrize(
-            "angle,expected",
-            [
-                (36, -36),
-                (720, 0),
-                (0, 0)
-            ]
-    )
+    @pytest.mark.parametrize("angle,expected", [(36, -36), (720, 0), (0, 0)])
     def test_neg(self, angle, expected):
         assert -Angle(angle) == Angle(expected)
 
     @pytest.mark.parametrize(
-            "angle_a,angle_b,expected",
-            [
-                (0, 0, 0),
-                (56, 0, 56),
-                (0, 4, -4),
-                (89, 2, 87),
-                (720, 2, -2),
-                (-28, 24, -52),
-                (-564, -564, 0),
-            ]
+        "angle_a,angle_b,expected",
+        [
+            (0, 0, 0),
+            (56, 0, 56),
+            (0, 4, -4),
+            (89, 2, 87),
+            (720, 2, -2),
+            (-28, 24, -52),
+            (-564, -564, 0),
+        ],
     )
     def test_sub(self, angle_a, angle_b, expected):
         assert Angle(angle_a) - Angle(angle_b) == Angle(expected)
+
 
 @pytest.mark.parametrize(
     "position, angle, expected",

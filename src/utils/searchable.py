@@ -1,5 +1,5 @@
 import logging
-from typing import Any
+from typing import Any, Callable
 
 
 class Searchable:
@@ -26,10 +26,27 @@ class Searchable:
         :param default: default value to be returned if all else fails
         :return: the first value which is not None, default value otherwise.
         """
-        logging.getLogger().debug(f"extract {key} value={value}, dict={self.get(key, value)} default={default}")
+        logging.getLogger().debug(
+            f"extract key={key}, value={value}, dict={self.get(key, value)}, default={default}"
+        )
         nvalue = value
         if not value:
             nvalue = self.get(key, value)
         if not nvalue:
             nvalue = default
         return nvalue
+
+    def update(self, updates: dict[str, Any]):
+        """
+        Updates the fields of this object, re-dispatching the
+
+        :param updates:
+        """
+        for k, v in updates.items():
+            if "." in k:
+                keys = k.split(".")
+                nkey = k[k.index(".") + 1 :]
+                logging.getLogger().debug(f"compound update: {k} => {nkey}: {v}")
+                self.__dict__[keys[0]].update({nkey: v})
+            else:
+                self.__dict__.update({k: v})

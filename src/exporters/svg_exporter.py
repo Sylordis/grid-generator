@@ -8,7 +8,8 @@ from .exporter import Exporter
 from ..grid import Grid, GridConfig, Cell
 from ..shapes import Shape, Arrow, Circle
 from ..utils.converters import str_to_number, Converters
-from ..utils.geometry import Angle, Position, ORIENTATIONS, OrientationSymbol, rotate
+from ..utils.geometry import Angle, Coordinates, rotate
+from ..utils.layout import Position
 
 
 SVGElementCreation: TypeAlias = tuple[dict[str, list[svg.Element]], list[svg.Element]]
@@ -137,7 +138,7 @@ class SVGExporter(Exporter):
                 # TODO Provide translation from here directly, then just apply it during shape creation
                 for shape in grid.content[row][col].content:
                     defs, elts = self.create_element(
-                        shape, grid, Position(col, row), shape_index=shape_index
+                        shape, grid, Coordinates(col, row), shape_index=shape_index
                     )
                     def_elements.update(defs)
                     elements.extend(elts)
@@ -145,7 +146,7 @@ class SVGExporter(Exporter):
         return def_elements, elements
 
     def create_element(
-        self, shape: Shape, grid: Grid, cell_position: Position, shape_index: int = 1
+        self, shape: Shape, grid: Grid, cell_position: Coordinates, shape_index: int = 1
     ) -> SVGElementCreation:
         """
         Dispatch the call to create an svg element from the Shape.
@@ -178,40 +179,41 @@ class SVGExporter(Exporter):
         self,
         shape: Arrow,
         grid: Grid,
-        cell_pos: Position,
-        translation: Position | None = None,
+        cell_pos: Coordinates,
+        translation: Coordinates | None = None,
         shape_id: str | None = None,
     ) -> SVGElementCreation:
         shape_fill = grid.shapes_cfg.extract("fill", shape.fill)
         cell_center = grid.calculate_cell_center(cell_pos)
         cell_bounds = [
-            cell_center - Position.all(grid.cfg.cell_size / 2),
-            cell_center + Position.all(grid.cfg.cell_size / 2),
+            cell_center - Coordinates.all(grid.cfg.cell_size / 2),
+            cell_center + Coordinates.all(grid.cfg.cell_size / 2),
         ]
         self._log.debug(
             f"Cell: pos={cell_pos} center:{cell_center}, size={grid.cfg.cell_size}, bounds={cell_bounds}"
         )
         # Create arrow
-        arrow_length_full = grid.calculate_size(shape.width, base = self.exporter_cfg.shape_base_cell_ratio)
-        self._log.debug(f"Arrow_length_full={arrow_length_full}, {shape.width}, base={self.exporter_cfg.shape_base_cell_ratio}")
+        arrow_length_full = grid.calculate_size(
+            shape.width, default=self.exporter_cfg.shape_base_cell_ratio
+        )
+        self._log.debug(
+            f"Arrow_length_full={arrow_length_full}, {shape.width}, base={self.exporter_cfg.shape_base_cell_ratio}"
+        )
         # The ends of the arrow are created around (0,0) directly, just need to add cell_center to them after rotation.
-        arrow_start = Position(-arrow_length_full / 2, 0)
-        arrow_end = Position(
+        arrow_start = Coordinates(-arrow_length_full / 2, 0)
+        arrow_end = Coordinates(
             round(arrow_length_full / 2 - self.exporter_cfg.arrows.head_length, 2), 0
         )
         self._log.debug(
             f"Arrow: base {arrow_start}=>{arrow_end}, length_full={arrow_length_full} (supposed={grid.cfg.cell_size * str_to_number(self.exporter_cfg.shape_base_cell_ratio)}), distance={arrow_start.distance(arrow_end)}"
         )
         # Rotate
-        desired_angle = grid.cell(cell_pos).extract(
+        desired_angle: Angle = grid.cell(cell_pos).extract(
             "orientation", shape.orientation, self.exporter_cfg.starting_angle
         )
         current_angle = self.exporter_cfg.starting_angle
         self._log.debug(f"Arrow rotation: {current_angle} => {desired_angle}")
-        if (
-            desired_angle
-            and desired_angle != self.exporter_cfg.starting_angle
-        ):
+        if desired_angle and desired_angle != self.exporter_cfg.starting_angle:
             angle: Angle = desired_angle - self.exporter_cfg.starting_angle
             arrow_start = rotate(arrow_start, angle)
             arrow_end = rotate(arrow_end, angle)
@@ -257,18 +259,21 @@ class SVGExporter(Exporter):
         self,
         shape: Circle,
         grid: Grid,
-        cell_pos: Position,
-        translation: Position | None = None,
+        cell_pos: Coordinates,
+        translation: Coordinates | None = None,
         shape_id: str | None = None,
     ) -> SVGElementCreation:
         shape_center = grid.calculate_cell_center(cell_pos)
         if translation:
             shape_center += translation
         shape_color = grid.shapes_cfg.extract("fill", shape.fill)
-        radius = grid.calculate_size(shape.width, base = self.exporter_cfg.shape_base_cell_ratio) / 2
-        self._log.debug(
-            f"Circle=((cx,cy)={shape_center}, r={radius}, fill={shape_color})"
+        radius = (
+            grid.calculate_size(
+                shape.width, base=self.exporter_cfg.shape_base_cell_ratio
+            )
+            / 2
         )
+        self._log.debug(f"Circle=(xy={shape_center}, r={radius}, fill={shape_color})")
         return {}, [
             svg.Circle(
                 id=shape_id,
@@ -280,6 +285,6 @@ class SVGExporter(Exporter):
         ]
 
     @classmethod
-    def normalize_id(cls, s:str):
+    def normalize_id(cls, s: str):
         o = str(s)
-        return re.sub('[^a-zA-Z0-9]', '-', o)
+        return re.sub("[^a-zA-Z0-9]", "-", o)

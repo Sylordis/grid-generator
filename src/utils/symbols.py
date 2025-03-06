@@ -6,7 +6,7 @@ class GridSymbol(StrEnum):
     CELL_SEPARATOR = "|"
     PARAMS_START = "{"
     PARAMS_END = "}"
-    PARAMS_SEPARATOR = ","
+    PARAMS_SEPARATOR = ";"
 
 
 class ShapeSymbol(StrEnum):
@@ -18,15 +18,3 @@ class ShapeSymbol(StrEnum):
     SQUARE = "Sq"
     STAR = "St"
     TRIANGLE = "T"
-
-
-class OrientationSymbol(StrEnum):
-    "Symbols for orientations."
-    BOTTOM = "B"
-    DIAG_BOTTOM_LEFT = "Z"
-    DIAG_BOTTOM_RIGHT = "C"
-    DIAG_TOP_LEFT = "Q"
-    DIAG_TOP_RIGHT = "E"
-    LEFT = "L"
-    RIGHT = "R"
-    TOP = "T"

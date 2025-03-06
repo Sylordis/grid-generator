@@ -2,18 +2,20 @@
 name = 'grid generator'
 description = 'Python tool to generate shapes in a grid from an simple text representative file.'
 version = "1.0"
-dynamic = ["version"]
+dynamic = ["version","dependencies"]
 authors = [
     {name = "Sylvain Domenjoud", email = "s.domenjoud@cgi.com"},
 ]
 maintainers = [
     {name = "Sylvain Domenjoud", email = "s.domenjoud@cgi.com"},
 ]
-dependencies = []
 requires-python = ">= 3.13"
 
 [projects.urls]
 Homepage = ""
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
 
 [tool.setuptools.packages.find]
 where = ["src"]

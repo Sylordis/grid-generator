@@ -6,10 +6,7 @@ import math
 from typing import Callable
 
 
-from .symbols import OrientationSymbol
-
-
-class Position:
+class Coordinates:
 
     def __init__(self, *values):
         self.coords = list(values)
@@ -29,18 +26,20 @@ class Position:
     def __add__(self, o):
         npos = self
         if isinstance(o, (int, float)):
-            npos = Position(*[v + o for v in self.coords])
-        if isinstance(o, (list, Position, tuple)):
-            npos = Position(*[a + b for a, b in zip_longest(self.coords, o.coords, fillvalue=0)])
+            npos = Coordinates(*[v + o for v in self.coords])
+        if isinstance(o, (list, Coordinates, tuple)):
+            npos = Coordinates(
+                *[a + b for a, b in zip_longest(self.coords, o.coords, fillvalue=0)]
+            )
         return npos
 
     def __and__(self, o):
         npos = self
         if callable(o):
-            npos = Position(*[o(v) for v in self.coords])
+            npos = Coordinates(*[o(v) for v in self.coords])
         return npos
 
-    def apply(self, converter: Callable[[float],float]) -> Position:
+    def apply(self, converter: Callable[[float], float]) -> Coordinates:
         """
         Applies a number converter to all coordinates of this position.
 
@@ -50,12 +49,12 @@ class Position:
         return self.__and__(converter)
 
     @staticmethod
-    def all(value, length=2) -> Position:
+    def all(value, length=2) -> Coordinates:
         if not isinstance(value, (float, int)):
             raise ValueError("Provided value must be a number (int or float)")
-        return Position(*[value] * length)
+        return Coordinates(*[value] * length)
 
-    def distance(self, p: Position):
+    def distance(self, p: Coordinates):
         """
         Calculates the distance between this point and another.
 
@@ -67,16 +66,18 @@ class Position:
         )
 
     def __eq__(self, o) -> bool:
-        if isinstance(o, Position):
-            return all(a == b for a,b in zip_longest(self.coords, o.coords, fillvalue=0))
+        if isinstance(o, Coordinates):
+            return all(
+                a == b for a, b in zip_longest(self.coords, o.coords, fillvalue=0)
+            )
         elif isinstance(o, (list, tuple)):
-            return all(a == b for a,b in zip_longest(self.coords, o, fillvalue=0))
+            return all(a == b for a, b in zip_longest(self.coords, o, fillvalue=0))
         else:
             return False
 
     def __floordiv__(self, o):
         if isinstance(o, (float, int)):
-            return Position(*[v // o for v in self.coords])
+            return Coordinates(*[v // o for v in self.coords])
         else:
             raise ValueError(
                 f"Cannot divide {self.__class__.__name__} with anything other than a number."
@@ -91,8 +92,8 @@ class Position:
     def __iadd__(self, o):
         if isinstance(o, (float, int)):
             self.coords = [v + o for v in self.coords]
-        if isinstance(o, (list, Position, tuple)):
-            self.coords = [s + v for s,v in zip_longest(self, o, fillvalue=0)]
+        if isinstance(o, (list, Coordinates, tuple)):
+            self.coords = [s + v for s, v in zip_longest(self, o, fillvalue=0)]
         return self
 
     def __iter__(self):
@@ -100,14 +101,14 @@ class Position:
 
     def __mul__(self, o):
         if isinstance(o, (float, int)):
-            return Position(*[v * o for v in self.coords])
+            return Coordinates(*[v * o for v in self.coords])
         else:
             raise ValueError(
                 f"Cannot multiply {self.__class__.__name__} with anything other than a number."
             )
 
     def __neg__(self):
-        return Position(*[-v for v in self.coords])
+        return Coordinates(*[-v for v in self.coords])
 
     def __repr__(self):
         return f"({",".join(map(str, self.coords))})"
@@ -117,7 +118,7 @@ class Position:
 
     def __truediv__(self, o):
         if isinstance(o, (float, int)):
-            return Position(*[v / o for v in self.coords])
+            return Coordinates(*[v / o for v in self.coords])
         else:
             raise ValueError(
                 f"Cannot divide {self.__class__.__name__} with anything other than a number."
@@ -138,7 +139,9 @@ class Angle:
         self, angle: float, angle_type: AngleMeasurement = AngleMeasurement.DEGREES
     ):
         "Angle in degrees."
-        if angle_type == AngleMeasurement.DEGREES or not angle_type:
+        if isinstance(angle, Angle):
+            self._angle = angle._angle
+        elif angle_type == AngleMeasurement.DEGREES or not angle_type:
             self._angle = angle % 360
         else:
             self._angle = angle * 180 / math.pi
@@ -174,9 +177,7 @@ class Angle:
         return abs(self._angle)
 
 
-def rotate(
-    xy: Position, angle: Angle
-) -> Position:
+def rotate(xy: Coordinates, angle: Angle) -> Coordinates:
     """
     Performs a rotation of the given position compared to the origin.
 
@@ -189,16 +190,4 @@ def rotate(
     degrees = angle.degrees / 180
     xn = x * math.cos(degrees * math.pi) - y * math.sin(degrees * math.pi)
     yn = x * math.sin(degrees * math.pi) + y * math.cos(degrees * math.pi)
-    return Position(xn, yn)
-
-
-ORIENTATIONS: dict[str, Angle] = {
-    OrientationSymbol.BOTTOM: Angle(90),
-    OrientationSymbol.DIAG_BOTTOM_LEFT: Angle(135),
-    OrientationSymbol.DIAG_BOTTOM_RIGHT: Angle(45),
-    OrientationSymbol.DIAG_TOP_LEFT: Angle(225),
-    OrientationSymbol.DIAG_TOP_RIGHT: Angle(315),
-    OrientationSymbol.LEFT: Angle(180),
-    OrientationSymbol.RIGHT: Angle(0),
-    OrientationSymbol.TOP: Angle(270),
-}
+    return Coordinates(xn, yn)

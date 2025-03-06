@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import Any
 
 
-from .utils.symbols import OrientationSymbol
+from .utils.layout import Position
 
 
 @dataclass
@@ -20,7 +20,7 @@ class Shape(ABC):
 class Arrow(Shape):
     border_width: int = 1
     head: Any = "150%"
-    orientation: OrientationSymbol | None = None
+    orientation: Position | None = None
     width: Any = None
 
 

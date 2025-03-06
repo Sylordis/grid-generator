@@ -1,40 +1,146 @@
 from dataclasses import dataclass
 from enum import StrEnum
+from typing import TypeAlias
 
 
+from .geometry import Angle
 from .searchable import Searchable
 
 
-class LayoutDisplayType(StrEnum):
-  """
-  Display type of the layout, e.g. in which main axis does the layout propagates.
-  """
-  HORIZONTAL = "horizontal"
-  "Layout will be strictly horizontal (along X axis)."
-  STACKED = "stacked"
-  "All shapes will be stacked upon each other (default)."
-  SQUARE = "square"
-  "Layout will be going equally between X and Y axis."
-  VERTICAL = "vertical"
-  "Layout will be strictly vertically (along Y axis)."
+class PositionShardHorizontal(StrEnum):
+    "Horizontal positioning, `None` is Center."
+    LEFT = "left"
+    RIGHT = "right"
 
 
-class LayoutDirectionHorizontal(StrEnum):
-  LEFT_TO_RIGHT = "ltr"
-  "Elements will be layout from left to right."
-  RIGHT_TO_LEFT = "rtl"
-  "Elements will be layout from right to left."
+class PositionShardVertical(StrEnum):
+    "Vertical positioning, `None` is Center/Middle"
+    BOTTOM = "bottom"
+    TOP = "top"
 
 
-class LayoutDirectionVertical(StrEnum):
-  BOTTOM_TO_TOP = "btt"
-  "Elements will be layout from bottom to top."
-  TOP_TO_BOTTOM = "ttb"
-  "Elements will be layout from top to bottom."
+@dataclass(frozen=True)
+class Position:
+    halign: PositionShardHorizontal | None
+    valign: PositionShardVertical | None
+    shortcuts: list[str] | None = None
+    _angle: Angle | int | float | None = None
+
+    @property
+    def angle(self) -> Angle:
+        a = None
+        if isinstance(self._angle, (float, int)):
+            a = Angle(self._angle)
+        elif isinstance(self._angle, Angle):
+            a = self._angle
+        return a
+
+    @property
+    def mnemonics(self):
+        mnemos = list(filter(None, [self.valign, self.halign]))
+        return "_".join([v.value for v in mnemos])
+
+
+PositionShard: TypeAlias = PositionShardHorizontal | PositionShardVertical | None
+
+
+class PositionFactory:
+
+    def __init__(self):
+        self._positions: list[Position] = [
+            Position(None, PositionShardVertical.BOTTOM, ["B"], 90),
+            Position(None, None, ["S"]),
+            Position(
+                PositionShardHorizontal.LEFT, PositionShardVertical.BOTTOM, ["Z"], 135
+            ),
+            Position(
+                PositionShardHorizontal.RIGHT, PositionShardVertical.BOTTOM, ["C"], 45
+            ),
+            Position(
+                PositionShardHorizontal.LEFT, PositionShardVertical.TOP, ["Q"], 225
+            ),
+            Position(
+                PositionShardHorizontal.RIGHT, PositionShardVertical.TOP, ["E"], 315
+            ),
+            Position(PositionShardHorizontal.LEFT, None, ["L"], 180),
+            Position(PositionShardHorizontal.RIGHT, None, ["R"], 0),
+            Position(None, PositionShardVertical.TOP, ["T"], 270),
+        ]
+
+    @property
+    def _shard_dict(self) -> dict[str, PositionShard]:
+        return {
+            v.value: v
+            for v in [e for e in PositionShardHorizontal]
+            + [e for e in PositionShardVertical]
+        }
+
+    def _str_to_shard(self, shard: str) -> PositionShard | None:
+        return self._shard_dict.get(shard, None)
+
+    def get_position(self, key: list[str] | tuple[str] | str) -> Position | None:
+        """
+        Gets a position from the key, which can be:
+        - a mnemonic
+        - a shortcut
+        - position id ("left", "top", etc)
+
+        :param key: search key
+        :return: a position matching the key, None otherwise
+        """
+        pos = None
+        candidates = list(
+            filter(lambda p: p.mnemonics == key or key in p.shortcuts, self._positions)
+        )
+        if len(candidates) > 0:
+            pos = candidates[0]
+        if not pos:
+            searched = list(key) if isinstance(key, (str, tuple)) else key
+            searched = [self._str_to_shard(s) for s in searched]
+            halign = next(
+                (p for p in searched if isinstance(p, PositionShardHorizontal)), None
+            )
+            valign = next(
+                (p for p in searched if isinstance(p, PositionShardVertical)), None
+            )
+            pos = next(
+                (
+                    p
+                    for p in self._positions
+                    if p.halign == halign and p.valign == valign
+                ),
+                None
+            )
+        return pos
+
+    def is_layouting(self, o) -> bool:
+        return (
+            o == None
+            or o in self._shard_dict
+            or o in [s for pl in self._positions for s in pl.shortcuts]
+        )
+
+
+class LayoutType(StrEnum):
+    """
+    Display type of the layout, e.g. in which main axis does the layout propagates.
+    """
+
+    # Ideas: Arrow, Arc, Triangle, Circle
+    LINE = "line"
+    "Layout will be a single line."
+    STACK = "stack"
+    "All shapes will be stacked upon each other (default)."
+    # SQUARE = "square"
+    # "Layout will be going equally between X and Y axis."
 
 
 @dataclass
 class Layout(Searchable):
-  display_type: LayoutDisplayType = LayoutDisplayType.STACKED
-  hdir: LayoutDirectionHorizontal = LayoutDirectionHorizontal.LEFT_TO_RIGHT
-  vdir: LayoutDirectionVertical = LayoutDirectionVertical.TOP_TO_BOTTOM
+    display_type: LayoutType = LayoutType.STACK
+    start: Position | None = None
+    end: Position | None = None
+
+    @staticmethod
+    def is_layout(o) -> bool:
+        return any([o.startswith(t) for t in LayoutType])

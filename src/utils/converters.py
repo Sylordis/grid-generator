@@ -11,7 +11,13 @@ def is_percentile(value) -> bool:
     :return: True if the value is a string and contains "%" or if it is between 1 and 0,
     false otherwise.
     """
-    return isinstance(value, str) and "%" in value or isinstance(value, (int, float)) and 0 <= value <= 1
+    return (
+        isinstance(value, str)
+        and "%" in value
+        or isinstance(value, (int, float))
+        and 0 <= value <= 1
+    )
+
 
 def str_to_number(value) -> float:
     """
@@ -26,13 +32,13 @@ def str_to_number(value) -> float:
     """
     ret = 0
     if isinstance(value, str):
-        if "%" in value:
+        if value.endswith("%"):
             ret = float(value[:-1]) / 100
-        elif "px" in value:
+        elif value.endswith("px"):
             ret = float(value[:-2])
         else:
             ret = float(value)
-    elif isinstance(value, int) or isinstance(value, float):
+    elif isinstance(value, (float, int)):
         ret = value
     return ret
 
@@ -40,6 +46,6 @@ def str_to_number(value) -> float:
 class Converters:
 
     @staticmethod
-    def to_float(precision: int) -> Callable[[Any],float]:
+    def to_float(precision: int) -> Callable[[Any], float]:
         "Float converter to reduce to a specific precision."
         return lambda x: round(x, precision)

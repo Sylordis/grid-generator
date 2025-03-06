@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 
 from .shapes import Shape
 from .utils.converters import is_percentile, str_to_number
-from .utils.geometry import Angle, Position
+from .utils.geometry import Angle, Coordinates
 from .utils.layout import Layout
 from .utils.searchable import Searchable
 
@@ -72,6 +72,7 @@ class ShapesConfig(Searchable):
         if not self.fill:
             self.fill = Color("#FF0000")
 
+
 @dataclass
 class Grid:
     """
@@ -91,7 +92,7 @@ class Grid:
         if not self.shapes_cfg:
             self.shapes_cfg = ShapesConfig()
 
-    def cell(self, col_or_pos: int|Position, row: int = -1) -> Cell | None:
+    def cell(self, col_or_pos: int | Coordinates, row: int = -1) -> Cell | None:
         """
         Gets a cell of the grid. As in arrays, numerotation starts at 0.
 
@@ -101,12 +102,12 @@ class Grid:
         """
         if isinstance(col_or_pos, int):
             return self.content[row][col_or_pos]
-        elif isinstance(col_or_pos, Position):
+        elif isinstance(col_or_pos, Coordinates):
             return self.content[col_or_pos[1]][col_or_pos[0]]
         else:
             return None
 
-    def calculate_cell_center(self, cell_pos: Position) -> Position:
+    def calculate_cell_center(self, cell_pos: Coordinates) -> Coordinates:
         """
         Calculates the center of a given cell according to its configuration.
 
@@ -114,9 +115,9 @@ class Grid:
         :return: a position with the exact center of the cell
         """
         pos = [pos * self.cfg.cell_size + self.cfg.cell_size / 2 for pos in cell_pos]
-        return Position(pos[0], pos[1])
+        return Coordinates(pos[0], pos[1])
 
-    def calculate_size(self, *factors, base = None) -> float:
+    def calculate_size(self, *factors, base=None, default=None) -> float:
         """
         Calculates a size based on multiple factors.
         It will first try to multiply all factors together in provided order.
@@ -125,19 +126,24 @@ class Grid:
         and multiply the factors product by the cell size.
 
         :param factors: all factors to multiply together
-        :param base: base number, usually a percentile number
+        :param base: number to use as base for the calculation (default is 1)
+        :param default: default size to provide in case there are no factors provided
         :return: a number
         """
         all_percentiles = True
         value = 1
         if base:
             value *= str_to_number(base)
+        orig = value
         for f in factors:
             if f:
                 value *= str_to_number(f)
                 if not is_percentile(f):
                     all_percentiles = False
                     break
+        if orig == value and default:
+            value = str_to_number(default)
+            all_percentiles = is_percentile(default)
         if all_percentiles:
             value *= self.cfg.cell_size
         return float(value)

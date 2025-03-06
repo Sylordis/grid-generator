@@ -1,16 +1,14 @@
-from colour import Color
 from dataclasses import dataclass
 import logging
 from pathlib import Path
 import re
-from typing import Any
 
 
+from .cfg_processor import CfgProcessor
 from .exporters import Exporter, SVGExporter
 from .grid import Cell, Grid, GridConfig
 from .shapes import Shape, Arrow, Circle
-from .utils.geometry import ORIENTATIONS
-from .utils.symbols import GridSymbol, OrientationSymbol, ShapeSymbol
+from .utils.symbols import GridSymbol, ShapeSymbol
 
 
 @dataclass
@@ -28,7 +26,7 @@ class GridDrawingTool:
     Main class to draw grids and arrows.
     """
 
-    def __init__(self, cfg = None, grid_cfg = None):
+    def __init__(self, cfg=None, grid_cfg=None):
         """
         Creates a new drawing tool.
 
@@ -42,6 +40,7 @@ class GridDrawingTool:
             self._set_cfg(cfg)
         self.grid_cfg = None
         "Overall grid configuration."
+        self._cfg_interpretor = CfgProcessor()
 
     def _set_cfg(self, cfg):
         """
@@ -49,7 +48,7 @@ class GridDrawingTool:
         """
         if cfg.dist:
             self.cfg.dist_dir = Path(cfg.dist)
-        if cfg.do_export:
+        if "do_export" in cfg:
             self.cfg.do_export = cfg.do_export
 
     def draw_all(self, files_str: list[str], cfg: GridConfig = None):
@@ -68,7 +67,9 @@ class GridDrawingTool:
                 self._log.warning(f"File '{src_file}' does not exist. Skipping.")
             else:
                 dist_file = (
-                    self.cfg.dist_dir if self.cfg.dist_dir is not None else src_file.parent
+                    self.cfg.dist_dir
+                    if self.cfg.dist_dir is not None
+                    else src_file.parent
                 )
                 dist_file = dist_file / f"{src_file.name}"
                 dist_file = dist_file.with_suffix(".svg")
@@ -142,7 +143,7 @@ class GridDrawingTool:
                 self._log.debug(f"Config matches: {cell_cfg}, {len(cell_cfg)}")
                 if cell_cfg:
                     cell_cfg = cell_cfg[1:-1].split(GridSymbol.PARAMS_SEPARATOR)
-                    cell.__dict__.update(self.interpret_cfg(cell_cfg))
+                    cell.__dict__.update(self._cfg_interpretor.interpret(cell_cfg))
             # Matching shapes
             self._log.debug(f"Matching shapes: {cell_text_processed}")
             pattern = r"((\d*)([A-Z][a-z]*)(\{([^}]+)\})?)"
@@ -170,7 +171,7 @@ class GridDrawingTool:
             ni = int(n)
         if shape_cfg:
             shape_cfg = list(filter(None, shape_cfg.split(GridSymbol.PARAMS_SEPARATOR)))
-        cfg = self.interpret_cfg(shape_cfg)
+        cfg = self._cfg_interpretor.interpret(shape_cfg)
         self._log.debug(f"shape: x{ni}, {shape_id}, {shape_cfg}, {cfg}")
         match shape_id:
             case ShapeSymbol.ARROW | "Arrow":
@@ -180,46 +181,3 @@ class GridDrawingTool:
             case _:
                 self._log.error(f"Unknown shape ID '{shape_id}'.")
         return [shape] * ni
-
-    def interpret_cfg(self, cfg_txt: list[str]) -> dict[str, Any]:
-        """
-        Interprets the text of a configuration.
-
-        :param shape_cfg_txt: configuration text.
-        :return: a dictionary of parameters to inject into the shape constructor.
-        """
-        cfg: dict[str, Any] = {}
-        sizes = []
-        colors = []
-        self._log.debug(f"cfg_txt={cfg_txt}")
-        for param in cfg_txt:
-            match = re.match("([a-z-]+)=(.*)", param)
-            size_match = re.match("\d+(px|cm|em|%)", param)
-            try:
-                color = Color(param)
-            except ValueError:
-                color = None
-            if match:
-                cfg[match.group(1).replace("-", "_")] = match.group(2)
-            elif param in [e.value for e in OrientationSymbol]:
-                cfg["orientation"] = ORIENTATIONS.get(param)
-            elif size_match:
-                sizes.append(param)
-            elif color:
-                colors.append(color)
-            else:
-                self._log.debug(f"unknown cfg param=[{param}]")
-        # Manage sizes
-        if len(sizes) == 1:
-            if "width" not in cfg:
-                cfg["width"] = sizes[0]
-            if "height" not in cfg:
-                cfg["height"] = sizes[0]
-        elif len(sizes) > 1:
-            sizes = sizes + [None] * 2
-            cfg["width"], cfg["height"], *_ = sizes
-        if len(colors) > 0:
-            colors = colors + [None] * 2
-            cfg["fill"], cfg["border_color"], *_ = colors
-        self._log.debug(f"cfg={cfg}")
-        return cfg

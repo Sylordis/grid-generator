@@ -31,7 +31,7 @@ class ArgParser:
             "-c",
             "--config",
             metavar="FILE",
-            help="Configuration file for default values."
+            help="Configuration file for default values.",
         )
         self.parser.add_argument(
             "-d",
@@ -43,7 +43,7 @@ class ArgParser:
             "--no-export",
             action="store_false",
             dest="do_export",
-            help="Prevents any export"
+            help="Prevents any export",
         )
 
     def parse(self):
@@ -58,5 +58,5 @@ def main():
     logging.basicConfig(
         level=getattr(logging, args.loglevel.upper(), None), format=log_format
     )
-    draw_tool = GridDrawingTool(cfg = args)
+    draw_tool = GridDrawingTool(cfg=args)
     draw_tool.draw_all(args.input_file)
