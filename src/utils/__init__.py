@@ -1,4 +1,4 @@
-from .converters import is_percentile, str_to_number, Converters
+from .converters import is_percentile, str_to_number, Converters, Size
 from .geometry import Coordinates, AngleMeasurement, Angle
 from .layout import LayoutType, PositionFactory
 from .searchable import Searchable

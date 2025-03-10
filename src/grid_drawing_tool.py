@@ -143,7 +143,7 @@ class GridDrawingTool:
                 self._log.debug(f"Config matches: {cell_cfg}, {len(cell_cfg)}")
                 if cell_cfg:
                     cell_cfg = cell_cfg[1:-1].split(GridSymbol.PARAMS_SEPARATOR)
-                    cell.__dict__.update(self._cfg_interpretor.interpret(cell_cfg))
+                    cell.update(self._cfg_interpretor.interpret(cell_cfg))
             # Matching shapes
             self._log.debug(f"Matching shapes: {cell_text_processed}")
             pattern = r"((\d*)([A-Z][a-z]*)(\{([^}]+)\})?)"

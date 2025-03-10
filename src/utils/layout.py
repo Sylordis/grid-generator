@@ -1,10 +1,13 @@
 from dataclasses import dataclass
 from enum import StrEnum
+import logging
+import re
 from typing import TypeAlias
 
 
-from .geometry import Angle
+from .geometry import Angle, Vector
 from .searchable import Searchable
+from .symbols import GridSymbol
 
 
 class PositionShardHorizontal(StrEnum):
@@ -19,11 +22,15 @@ class PositionShardVertical(StrEnum):
     TOP = "top"
 
 
+PositionShard: TypeAlias = PositionShardHorizontal | PositionShardVertical | None
+
+
 @dataclass(frozen=True)
 class Position:
     halign: PositionShardHorizontal | None
     valign: PositionShardVertical | None
     shortcuts: list[str] | None = None
+    relative_coords: Vector = None
     _angle: Angle | int | float | None = None
 
     @property
@@ -40,31 +47,48 @@ class Position:
         mnemos = list(filter(None, [self.valign, self.halign]))
         return "_".join([v.value for v in mnemos])
 
-
-PositionShard: TypeAlias = PositionShardHorizontal | PositionShardVertical | None
+    def __repr__(self):
+        return self.mnemonics
 
 
 class PositionFactory:
 
     def __init__(self):
+        self._log = logging.getLogger()
         self._positions: list[Position] = [
-            Position(None, PositionShardVertical.BOTTOM, ["B"], 90),
-            Position(None, None, ["S"]),
+            Position(None, PositionShardVertical.BOTTOM, ["B"], Vector(0.5, 1), 90),
+            Position(None, None, ["S"], Vector(0.5, 0.5)),
             Position(
-                PositionShardHorizontal.LEFT, PositionShardVertical.BOTTOM, ["Z"], 135
+                PositionShardHorizontal.LEFT,
+                PositionShardVertical.BOTTOM,
+                ["Z"],
+                Vector(0, 1),
+                135,
             ),
             Position(
-                PositionShardHorizontal.RIGHT, PositionShardVertical.BOTTOM, ["C"], 45
+                PositionShardHorizontal.RIGHT,
+                PositionShardVertical.BOTTOM,
+                ["C"],
+                Vector(1, 1),
+                45,
             ),
             Position(
-                PositionShardHorizontal.LEFT, PositionShardVertical.TOP, ["Q"], 225
+                PositionShardHorizontal.LEFT,
+                PositionShardVertical.TOP,
+                ["Q"],
+                Vector(0, 0),
+                225,
             ),
             Position(
-                PositionShardHorizontal.RIGHT, PositionShardVertical.TOP, ["E"], 315
+                PositionShardHorizontal.RIGHT,
+                PositionShardVertical.TOP,
+                ["E"],
+                Vector(1, 0),
+                315,
             ),
-            Position(PositionShardHorizontal.LEFT, None, ["L"], 180),
-            Position(PositionShardHorizontal.RIGHT, None, ["R"], 0),
-            Position(None, PositionShardVertical.TOP, ["T"], 270),
+            Position(PositionShardHorizontal.LEFT, None, ["L"], Vector(0, 0.5), 180),
+            Position(PositionShardHorizontal.RIGHT, None, ["R"], Vector(1, 0.5), 0),
+            Position(None, PositionShardVertical.TOP, ["T"], Vector(0.5, 0), 270),
         ]
 
     @property
@@ -76,6 +100,9 @@ class PositionFactory:
         }
 
     def _str_to_shard(self, shard: str) -> PositionShard | None:
+        """
+        Gets a position shard from the string representation.
+        """
         return self._shard_dict.get(shard, None)
 
     def get_position(self, key: list[str] | tuple[str] | str) -> Position | None:
@@ -109,7 +136,7 @@ class PositionFactory:
                     for p in self._positions
                     if p.halign == halign and p.valign == valign
                 ),
-                None
+                None,
             )
         return pos
 
@@ -126,7 +153,7 @@ class LayoutType(StrEnum):
     Display type of the layout, e.g. in which main axis does the layout propagates.
     """
 
-    # Ideas: Arrow, Arc, Triangle, Circle
+    # Ideas: Arrow, Arc, Triangle, Circle, letter-shaped
     LINE = "line"
     "Layout will be a single line."
     STACK = "stack"

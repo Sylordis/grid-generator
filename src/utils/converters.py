@@ -1,4 +1,7 @@
-from typing import Callable, Any
+from typing import Callable, Any, TypeAlias
+
+
+Size: TypeAlias = float | int | str
 
 
 def is_percentile(value) -> bool:

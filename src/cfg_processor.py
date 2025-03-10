@@ -5,6 +5,7 @@ from typing import Any
 
 
 from .utils.layout import Layout, PositionFactory
+from .utils.symbols import GridSymbol
 
 
 class CfgProcessor:
@@ -51,14 +52,21 @@ class CfgProcessor:
         self._log.debug(f"cfg={cfg}")
         return cfg
 
-    def _do_layout(self, txt) -> dict[str, Any]:
+    def _do_layout(self, txt: str) -> dict[str, Any]:
         self._log.debug(f"layouting=[{txt}]")
-        if "[" in txt:
-            pass
-        # TODO layout type
-        # TODO layout start
-        # TODO layout end
-        return {}
+        ret = {}
+        ntxt = txt
+        if GridSymbol.CFG_START in txt:
+            layout_cfg = txt[txt.index(GridSymbol.CFG_START) :]
+            ntxt = ntxt[: -len(layout_cfg)]
+            options = layout_cfg[1:-1].split(GridSymbol.CFG_SEPARATOR)
+            self._log.debug(f"layout options: {options}")
+            if len(options) > 0:
+                ret["layout.start"] = self._position_factory.get_position(options[0])
+            if len(options) > 1:
+                ret["layout.end"] = self._position_factory.get_position(options[1])
+        ret["layout.display_type"] = ntxt
+        return ret
 
     def _do_sizes(self, sizes) -> dict[str, Any]:
         "Manages sizes."

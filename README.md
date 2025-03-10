@@ -29,7 +29,9 @@ You can also run `python -m grid-generator --help` for help.
 
 ## Development
 
-Unit tests can be run with `pytest .`
+Unit tests can be run with `pytest grid-generator`
+
+Coverage results can be obtained with `coverage run -m pytest grid-generator` then `coverage report -m`
 
 ## Author / Contributing
 

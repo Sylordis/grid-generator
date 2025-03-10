@@ -1,13 +1,13 @@
 import math
 import pytest
 
-from utils.geometry import Angle, AngleMeasurement, Position, rotate
+from utils.geometry import Angle, AngleMeasurement, Vector, rotate
 
 
-class TestPosition:
+class TestVector:
 
     def test_iter(self):
-        pos = Position(1, 2)
+        pos = Vector(1, 2)
         x, y = pos
         assert x == 1
         assert y == 2
@@ -15,9 +15,9 @@ class TestPosition:
     @pytest.mark.parametrize(
         "a,b,expected",
         [
-            (Position(0, 0), Position(0, 0), Position(0, 0)),
-            (Position(0, 0), Position(1, 2), Position(1, 2)),
-            (Position(3, 4), Position(-3, -4), Position(0, 0)),
+            (Vector(0, 0), Vector(0, 0), Vector(0, 0)),
+            (Vector(0, 0), Vector(1, 2), Vector(1, 2)),
+            (Vector(3, 4), Vector(-3, -4), Vector(0, 0)),
         ],
     )
     def test_add(self, a, b, expected):
@@ -25,24 +25,24 @@ class TestPosition:
         assert expected == c
 
     @pytest.mark.parametrize(
-        "position,converter,expected",
+        "Vector,converter,expected",
         [
-            (Position(0, 0), lambda x: x, Position(0, 0)),
-            (Position(0, 0), lambda x: x + 1, Position(1, 1)),
-            (Position(3.2, 4.56), lambda x: round(x, 0), Position(3, 5)),
+            (Vector(0, 0), lambda x: x, Vector(0, 0)),
+            (Vector(0, 0), lambda x: x + 1, Vector(1, 1)),
+            (Vector(3.2, 4.56), lambda x: round(x, 0), Vector(3, 5)),
         ],
     )
-    def test_and(self, position, converter, expected):
-        assert position & converter == expected
+    def test_and(self, Vector, converter, expected):
+        assert Vector & converter == expected
 
     @pytest.mark.parametrize(
         "pos,s,expected",
         [
-            (Position(0, 0), 0, 0),
-            (Position(3213, 4123), 0, 3213),
-            (Position(3213, 4123), 1, 4123),
-            (Position(192, 123), slice(0, 1), [192]),
-            (Position(192, 123), slice(0, 2), [192, 123]),
+            (Vector(0, 0), 0, 0),
+            (Vector(3213, 4123), 0, 3213),
+            (Vector(3213, 4123), 1, 4123),
+            (Vector(192, 123), slice(0, 1), [192]),
+            (Vector(192, 123), slice(0, 2), [192, 123]),
         ],
     )
     def test_getitem(self, pos, s, expected):
@@ -51,11 +51,11 @@ class TestPosition:
     @pytest.mark.parametrize(
         "pos,expected",
         [
-            (Position(0, 0), Position(0, 0)),
-            (Position(-1, 0), Position(1, 0)),
-            (Position(0, -128), Position(0, 128)),
-            (Position(2, 5), Position(-2, -5)),
-            (Position(-4, 8), Position(4, -8)),
+            (Vector(0, 0), Vector(0, 0)),
+            (Vector(-1, 0), Vector(1, 0)),
+            (Vector(0, -128), Vector(0, 128)),
+            (Vector(2, 5), Vector(-2, -5)),
+            (Vector(-4, 8), Vector(4, -8)),
         ],
     )
     def test_neg(self, pos, expected):
@@ -113,20 +113,20 @@ class TestAngle:
 
 
 @pytest.mark.parametrize(
-    "position, angle, expected",
+    "Vector, angle, expected",
     [
-        (Position(0, 0), 0, Position(0, 0)),
-        (Position(1, 0), 90, Position(0, 1)),
-        (Position(1, 0), -90, Position(0, -1)),
-        (Position(1, 0), 180, Position(-1, 0)),
-        (Position(1, 0), -180, Position(-1, 0)),
-        (Position(1, 0), 360, Position(1, 0)),
-        (Position(1, 0), -360, Position(1, 0)),
-        (Position(1, 0), 45, Position(math.sqrt(2) / 2, math.sqrt(2) / 2)),
+        (Vector(0, 0), 0, Vector(0, 0)),
+        (Vector(1, 0), 90, Vector(0, 1)),
+        (Vector(1, 0), -90, Vector(0, -1)),
+        (Vector(1, 0), 180, Vector(-1, 0)),
+        (Vector(1, 0), -180, Vector(-1, 0)),
+        (Vector(1, 0), 360, Vector(1, 0)),
+        (Vector(1, 0), -360, Vector(1, 0)),
+        (Vector(1, 0), 45, Vector(math.sqrt(2) / 2, math.sqrt(2) / 2)),
     ],
 )
-def test_rotate(position, angle, expected):
-    nx, ny = rotate(position, Angle(angle))
+def test_rotate(Vector, angle, expected):
+    nx, ny = rotate(Vector, Angle(angle))
     ex, ey = expected
     assert math.isclose(nx, ex, abs_tol=1e-8)
     assert math.isclose(ny, ey, abs_tol=1e-8)

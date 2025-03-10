@@ -3,13 +3,22 @@ from dataclasses import dataclass
 from enum import StrEnum
 from itertools import zip_longest
 import math
-from typing import Callable
+from typing import Callable, TypeAlias
 
 
-class Coordinates:
+class Vector:
 
-    def __init__(self, *values):
-        self.coords = list(values)
+    def __init__(self, *values, d: int = None):
+        """
+        Creates new Vector.
+
+        :param values: values of the coordinates of this vector
+        :param d: the number of dimensions, creating a vector of d dimensions of 0s, only used if values are None
+        """
+        if values:
+            self.coords = list(values)
+        elif d:
+            self.coords = [0] * d
 
     @property
     def x(self):
@@ -26,9 +35,9 @@ class Coordinates:
     def __add__(self, o):
         npos = self
         if isinstance(o, (int, float)):
-            npos = Coordinates(*[v + o for v in self.coords])
-        if isinstance(o, (list, Coordinates, tuple)):
-            npos = Coordinates(
+            npos = Vector(*[v + o for v in self.coords])
+        if isinstance(o, (list, Vector, tuple)):
+            npos = Vector(
                 *[a + b for a, b in zip_longest(self.coords, o.coords, fillvalue=0)]
             )
         return npos
@@ -36,25 +45,25 @@ class Coordinates:
     def __and__(self, o):
         npos = self
         if callable(o):
-            npos = Coordinates(*[o(v) for v in self.coords])
+            npos = Vector(*[o(v) for v in self.coords])
         return npos
 
-    def apply(self, converter: Callable[[float], float]) -> Coordinates:
+    def apply(self, converter: Callable[[float], float]) -> Vector:
         """
-        Applies a number converter to all coordinates of this position.
+        Applies a number converter to all Vector of this position.
 
-        :param converter: a converter to apply to both coordinates
-        :return: a new position where the converter has been applied to both coordinates.
+        :param converter: a converter to apply to both Vector
+        :return: a new position where the converter has been applied to both Vector.
         """
         return self.__and__(converter)
 
     @staticmethod
-    def all(value, length=2) -> Coordinates:
+    def all(value, length=2) -> Vector:
         if not isinstance(value, (float, int)):
             raise ValueError("Provided value must be a number (int or float)")
-        return Coordinates(*[value] * length)
+        return Vector(*[value] * length)
 
-    def distance(self, p: Coordinates):
+    def distance(self, p: Vector):
         """
         Calculates the distance between this point and another.
 
@@ -66,7 +75,7 @@ class Coordinates:
         )
 
     def __eq__(self, o) -> bool:
-        if isinstance(o, Coordinates):
+        if isinstance(o, Vector):
             return all(
                 a == b for a, b in zip_longest(self.coords, o.coords, fillvalue=0)
             )
@@ -77,7 +86,7 @@ class Coordinates:
 
     def __floordiv__(self, o):
         if isinstance(o, (float, int)):
-            return Coordinates(*[v // o for v in self.coords])
+            return Vector(*[v // o for v in self.coords])
         else:
             raise ValueError(
                 f"Cannot divide {self.__class__.__name__} with anything other than a number."
@@ -92,7 +101,7 @@ class Coordinates:
     def __iadd__(self, o):
         if isinstance(o, (float, int)):
             self.coords = [v + o for v in self.coords]
-        if isinstance(o, (list, Coordinates, tuple)):
+        if isinstance(o, (list, Vector, tuple)):
             self.coords = [s + v for s, v in zip_longest(self, o, fillvalue=0)]
         return self
 
@@ -101,14 +110,14 @@ class Coordinates:
 
     def __mul__(self, o):
         if isinstance(o, (float, int)):
-            return Coordinates(*[v * o for v in self.coords])
+            return Vector(*[v * o for v in self.coords])
         else:
             raise ValueError(
                 f"Cannot multiply {self.__class__.__name__} with anything other than a number."
             )
 
     def __neg__(self):
-        return Coordinates(*[-v for v in self.coords])
+        return Vector(*[-v for v in self.coords])
 
     def __repr__(self):
         return f"({",".join(map(str, self.coords))})"
@@ -118,11 +127,14 @@ class Coordinates:
 
     def __truediv__(self, o):
         if isinstance(o, (float, int)):
-            return Coordinates(*[v / o for v in self.coords])
+            return Vector(*[v / o for v in self.coords])
         else:
             raise ValueError(
                 f"Cannot divide {self.__class__.__name__} with anything other than a number."
             )
+
+
+Coordinates: TypeAlias = Vector
 
 
 class AngleMeasurement(StrEnum):
@@ -177,7 +189,7 @@ class Angle:
         return abs(self._angle)
 
 
-def rotate(xy: Coordinates, angle: Angle) -> Coordinates:
+def rotate(xy: Vector, angle: Angle) -> Vector:
     """
     Performs a rotation of the given position compared to the origin.
 
@@ -190,4 +202,4 @@ def rotate(xy: Coordinates, angle: Angle) -> Coordinates:
     degrees = angle.degrees / 180
     xn = x * math.cos(degrees * math.pi) - y * math.sin(degrees * math.pi)
     yn = x * math.sin(degrees * math.pi) + y * math.cos(degrees * math.pi)
-    return Coordinates(xn, yn)
+    return Vector(xn, yn)

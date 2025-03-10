@@ -4,8 +4,8 @@ from dataclasses import dataclass, field
 
 from .shapes import Shape
 from .utils.converters import is_percentile, str_to_number
-from .utils.geometry import Angle, Coordinates
-from .utils.layout import Layout
+from .utils.geometry import Angle, Coordinates, Vector
+from .utils.layout import Layout, Position
 from .utils.searchable import Searchable
 
 
@@ -102,7 +102,7 @@ class Grid:
         """
         if isinstance(col_or_pos, int):
             return self.content[row][col_or_pos]
-        elif isinstance(col_or_pos, Coordinates):
+        elif isinstance(col_or_pos, Vector):
             return self.content[col_or_pos[1]][col_or_pos[0]]
         else:
             return None
@@ -116,6 +116,33 @@ class Grid:
         """
         pos = [pos * self.cfg.cell_size + self.cfg.cell_size / 2 for pos in cell_pos]
         return Coordinates(pos[0], pos[1])
+
+    def calculate_cell_bounds(
+        self, cell_pos: Coordinates
+    ) -> tuple[Coordinates, Coordinates]:
+        """
+        Calculate the bounds of a given cell in matter of coordinates, giving the highest left point and the lowest right point.
+
+        :param cell_pos: position of the cell in the grid
+        :return: a tuple of 2 coordinates.
+        """
+        top_left_corner = cell_pos * self.cfg.cell_size
+        bottom_right_corner = (cell_pos + 1) * self.cfg.cell_size
+        return (top_left_corner, bottom_right_corner)
+
+    def get_position_coordinates(
+        self, cell_pos: Coordinates, position: Position
+    ) -> Coordinates:
+        """
+        Gets a given position coordinates corresponding to a given cell.
+
+        :param cell_pos: cell concerned
+        :param position: requested position
+        :return: coordinates of the position in the cell.
+        """
+        top_left_corner = cell_pos * self.cfg.cell_size
+        coords = top_left_corner + position.relative_coords * self.cfg.cell_size
+        return coords
 
     def calculate_size(self, *factors, base=None, default=None) -> float:
         """

@@ -1,2 +1,2 @@
-A{T}|2A{T}|A{T}
+A{T}|{line}2A{T}|A{T}
 |C{green}|
