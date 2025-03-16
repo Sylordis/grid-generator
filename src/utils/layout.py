@@ -27,8 +27,8 @@ PositionShard: TypeAlias = PositionShardHorizontal | PositionShardVertical | Non
 
 @dataclass(frozen=True)
 class Position:
-    halign: PositionShardHorizontal | None
     valign: PositionShardVertical | None
+    halign: PositionShardHorizontal | None
     shortcuts: list[str] | None = None
     relative_coords: Vector = None
     _angle: Angle | int | float | None = None
@@ -56,39 +56,39 @@ class PositionFactory:
     def __init__(self):
         self._log = logging.getLogger()
         self._positions: list[Position] = [
-            Position(None, PositionShardVertical.BOTTOM, ["B"], Vector(0.5, 1), 90),
-            Position(None, None, ["S"], Vector(0.5, 0.5)),
+            Position(PositionShardVertical.BOTTOM, None, ["B"], Vector(0.5, 1), 270),
             Position(
-                PositionShardHorizontal.LEFT,
                 PositionShardVertical.BOTTOM,
+                PositionShardHorizontal.LEFT,
                 ["Z"],
                 Vector(0, 1),
-                135,
-            ),
-            Position(
-                PositionShardHorizontal.RIGHT,
-                PositionShardVertical.BOTTOM,
-                ["C"],
-                Vector(1, 1),
-                45,
-            ),
-            Position(
-                PositionShardHorizontal.LEFT,
-                PositionShardVertical.TOP,
-                ["Q"],
-                Vector(0, 0),
                 225,
             ),
             Position(
+                PositionShardVertical.BOTTOM,
                 PositionShardHorizontal.RIGHT,
-                PositionShardVertical.TOP,
-                ["E"],
-                Vector(1, 0),
+                ["C"],
+                Vector(1, 1),
                 315,
             ),
-            Position(PositionShardHorizontal.LEFT, None, ["L"], Vector(0, 0.5), 180),
-            Position(PositionShardHorizontal.RIGHT, None, ["R"], Vector(1, 0.5), 0),
-            Position(None, PositionShardVertical.TOP, ["T"], Vector(0.5, 0), 270),
+            Position(None, PositionShardHorizontal.LEFT, ["L"], Vector(0, 0.5), 180),
+            Position(None, PositionShardHorizontal.RIGHT, ["R"], Vector(1, 0.5), 0),
+            Position(PositionShardVertical.TOP, None, ["T"], Vector(0.5, 0), 90),
+            Position(None, None, ["S"], Vector(0.5, 0.5)),
+            Position(
+                PositionShardVertical.TOP,
+                PositionShardHorizontal.LEFT,
+                ["Q"],
+                Vector(0, 0),
+                135,
+            ),
+            Position(
+                PositionShardVertical.TOP,
+                PositionShardHorizontal.RIGHT,
+                ["E"],
+                Vector(1, 0),
+                45,
+            ),
         ]
 
     @property
@@ -158,8 +158,17 @@ class LayoutType(StrEnum):
     "Layout will be a single line."
     STACK = "stack"
     "All shapes will be stacked upon each other (default)."
-    # SQUARE = "square"
+    # GRID = "grid"
     # "Layout will be going equally between X and Y axis."
+
+
+_LAYOUT_SHORTCUTS: dict[str,str] = {
+    "horizontal": "line[L,R]",
+    "rhorizontal": "line[R,L]",
+    "vertical": "line[T,B]",
+    "rvertical": "line[B,T]",
+}
+"Human readable shortcuts for layouts dictionary to functional layout declarations."
 
 
 @dataclass
@@ -170,4 +179,15 @@ class Layout(Searchable):
 
     @staticmethod
     def is_layout(o) -> bool:
-        return any([o.startswith(t) for t in LayoutType])
+        return any([o.startswith(t) for t in LayoutType]) or Layout.is_layout_shortcut(o)
+
+    @staticmethod
+    def is_layout_shortcut(o) -> bool:
+        return o in _LAYOUT_SHORTCUTS
+
+    @staticmethod
+    def expand_shortcut(o) -> str | None:
+        """
+        Gets the true value of a shortcut.
+        """
+        return _LAYOUT_SHORTCUTS[o] if o in _LAYOUT_SHORTCUTS else None

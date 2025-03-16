@@ -1,0 +1,3 @@
+{line[T,B]}2A|{line}3A{T}|{C;line}3A
+{line}C{orange};A|{E;line[Q,C]}C{green}C{blue;50%}A
+{Z}C{green}C{blue;50%}A|{E}C{green}C{blue;50%}A|{Q}C{green}C{blue;50%}A

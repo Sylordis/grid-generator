@@ -139,16 +139,18 @@ class SVGExporter(Exporter):
         layout_manager = LayoutGenerator()
         for row in range(len(grid.content)):
             for col in range(len(grid.content[row])):
-                cell = grid.cell(col, row)
+                cell_pos = Coordinates(col, row)
+                self._log.debug(f"Generating cell {Vector(col,row)}")
+                cell = grid.cell(cell_pos)
                 # TODO Manage layout
-                layout_pos = layout_manager.generate(grid, Vector(col, row))
+                layout_pos = layout_manager.generate(grid, cell_pos)
                 # Create shapes
                 shape_index = 1
                 for shape in cell.content:
                     defs, elts = self.create_element(
                         shape,
                         grid,
-                        Coordinates(col, row),
+                        cell_pos,
                         shape_center=next(layout_pos),
                         shape_index=shape_index,
                     )
@@ -225,7 +227,7 @@ class SVGExporter(Exporter):
         current_angle = self.exporter_cfg.starting_angle
         self._log.debug(f"Arrow rotation: {current_angle} => {desired_angle}")
         if desired_angle and desired_angle != self.exporter_cfg.starting_angle:
-            angle: Angle = desired_angle - self.exporter_cfg.starting_angle
+            angle: Angle = self.exporter_cfg.starting_angle - desired_angle
             arrow_start = rotate(arrow_start, angle)
             arrow_end = rotate(arrow_end, angle)
             self._log.debug(

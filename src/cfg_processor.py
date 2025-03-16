@@ -56,8 +56,10 @@ class CfgProcessor:
         self._log.debug(f"layouting=[{txt}]")
         ret = {}
         ntxt = txt
-        if GridSymbol.CFG_START in txt:
-            layout_cfg = txt[txt.index(GridSymbol.CFG_START) :]
+        if Layout.is_layout_shortcut(ntxt):
+            ntxt = Layout.expand_shortcut(ntxt)
+        if GridSymbol.CFG_START in ntxt:
+            layout_cfg = ntxt[ntxt.index(GridSymbol.CFG_START) :]
             ntxt = ntxt[: -len(layout_cfg)]
             options = layout_cfg[1:-1].split(GridSymbol.CFG_SEPARATOR)
             self._log.debug(f"layout options: {options}")

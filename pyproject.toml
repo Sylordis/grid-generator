@@ -12,7 +12,7 @@ maintainers = [
 requires-python = ">= 3.13"
 
 [projects.urls]
-Homepage = ""
+Homepage = "https://github.com/Sylordis/grid-generator"
 
 [tool.setuptools.dynamic]
 dependencies = {file = ["requirements.txt"]}

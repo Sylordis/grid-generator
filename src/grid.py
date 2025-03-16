@@ -61,14 +61,12 @@ class ShapesConfig(Searchable):
 
     border_color: Color | None = None
     "Color of the grid border."
-    border_width: int = 1
+    border_width: int = 0
     "Default border width."
     fill: Color | None = None
     "Default colour of the objects in the grid."
 
     def __post_init__(self):
-        if not self.border_color:
-            self.border_color = Color("#FF0000")
         if not self.fill:
             self.fill = Color("#FF0000")
 

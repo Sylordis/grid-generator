@@ -1,6 +1,6 @@
 # Grid Generator
 
-Python tool to generate shapes in a grid from an simple text representative file.
+Python tool to generate shapes in a grid from a simple text representative file.
 
 **This project is still under construction.**
 
@@ -25,11 +25,25 @@ From outside this repo, in the virtual environment:
 python -m grid-generator [options] <input_files..>
 ```
 
+SVG files will be created in the directory of the input files, or in the directory specified by `--dist`/`-d`.
+
 You can also run `python -m grid-generator --help` for help.
+
+**Using test data as inputs:**
+
+From outside this repo, inside the virtual environment:
+
+```bash
+python -m grid-generator -d grid-generator/dist grid-generator/test/data
+```
+
+## Input files
+
+Definition of the input file is described in [documentation files](doc/input_file_definition.md).
 
 ## Development
 
-Unit tests can be run with `pytest grid-generator`
+Unit tests can be run with `pytest grid-generator` from outside the root of this repository.
 
 Coverage results can be obtained with `coverage run -m pytest grid-generator` then `coverage report -m`
 

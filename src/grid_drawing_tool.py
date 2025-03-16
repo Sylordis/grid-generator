@@ -48,6 +48,7 @@ class GridDrawingTool:
         """
         if cfg.dist:
             self.cfg.dist_dir = Path(cfg.dist)
+        # "do_export" is a boolean
         if "do_export" in cfg:
             self.cfg.do_export = cfg.do_export
 
