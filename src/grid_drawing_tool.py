@@ -4,10 +4,10 @@ from pathlib import Path
 import re
 
 
-from .cfg_processor import CfgProcessor
+from .cfg_parser import CfgParser
 from .exporters import Exporter, SVGExporter
 from .grid import Cell, Grid, GridConfig
-from .shapes import Shape, Arrow, Circle
+from .shapes import Shape, Arrow, Circle, Rectangle
 from .utils.symbols import GridSymbol, ShapeSymbol
 
 
@@ -40,7 +40,7 @@ class GridDrawingTool:
             self._set_cfg(cfg)
         self.grid_cfg = None
         "Overall grid configuration."
-        self._cfg_interpretor = CfgProcessor()
+        self._cfg_interpretor = CfgParser()
 
     def _set_cfg(self, cfg):
         """
@@ -167,6 +167,7 @@ class GridDrawingTool:
         :return: a list of shapes
         """
         shape: Shape | None = None
+        ret = []
         ni = 1
         if n:
             ni = int(n)
@@ -179,6 +180,14 @@ class GridDrawingTool:
                 shape = Arrow(**cfg)
             case ShapeSymbol.CIRCLE | "Circle":
                 shape = Circle(**cfg)
+            case ShapeSymbol.RECTANGLE | "Rectangle":
+                shape = Rectangle(**cfg)
+            case ShapeSymbol.SQUARE | "Square":
+                if "width" in cfg:
+                    cfg["height"] = cfg["width"]
+                shape = Rectangle(**cfg)
             case _:
-                self._log.error(f"Unknown shape ID '{shape_id}'.")
-        return [shape] * ni
+                self._log.error(f"Unknown shape ID '{shape_id}'")
+        if shape:
+            ret = [shape] * ni
+        return ret

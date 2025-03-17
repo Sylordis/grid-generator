@@ -8,7 +8,7 @@ from .utils.layout import Layout, PositionFactory
 from .utils.symbols import GridSymbol
 
 
-class CfgProcessor:
+class CfgParser:
     """
     Standalone helper for interpreting configuration from strings.
     """
@@ -30,7 +30,7 @@ class CfgProcessor:
         self._log.debug(f"cfg_txt={cfg_txt}")
         for param in cfg_txt:
             match = re.match("([a-z-]+)=(.*)", param)
-            size_match = re.match("\d+(px|%)", param)
+            size_match = re.match("\d+(px|%)", param) #TODO increase to YxZ|Yx|xZ
             try:
                 color = Color(param)
             except ValueError:
@@ -46,7 +46,7 @@ class CfgProcessor:
             elif color:
                 colors.append(color)
             else:
-                self._log.debug(f"unknown cfg param=[{param}]")
+                self._log.warning(f"Unknown cfg param '{param}'")
         cfg.update(self._do_sizes(sizes))
         cfg.update(self._do_colors(colors))
         self._log.debug(f"cfg={cfg}")

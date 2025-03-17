@@ -17,13 +17,20 @@ class Shape(ABC):
 
 
 @dataclass
-class Arrow(Shape):
-    border_width: int = 1
-    head: Any = "150%"
+class OrientableShape(Shape):
     orientation: Position | None = None
-    width: Any = None
+
+
+@dataclass
+class Arrow(OrientableShape):
+    head: Any = "150%"
 
 
 @dataclass
 class Circle(Shape):
     pass
+
+
+@dataclass
+class Rectangle(OrientableShape):
+    border_radius: int = 0

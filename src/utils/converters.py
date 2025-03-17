@@ -46,6 +46,17 @@ def str_to_number(value) -> float:
     return ret
 
 
+def apply_all(m: Callable[[],Any], *values) -> tuple:
+    """
+    Applies a method to all provided values and return all values as a tuple to be unpacked.
+
+    :param m: a method to apply to all values
+    :param values: all values to process
+    :return: a tuple of all values that have been passed through the method
+    """
+    return tuple([m(v) for v in values])
+
+
 class Converters:
 
     @staticmethod

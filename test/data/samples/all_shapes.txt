@@ -1,2 +1,2 @@
 A|C|D||
-R|Sq|St|T{C}
+R{75%;50%;E}|Sq|St|T{C}

@@ -6,8 +6,8 @@ from typing import TypeAlias, Any
 
 from .exporter import Exporter
 from ..grid import Grid, GridConfig, Cell
-from ..shapes import Shape, Arrow, Circle
-from ..utils.converters import str_to_number, Converters, Size
+from ..shapes import Shape, OrientableShape, Arrow, Circle, Rectangle
+from ..utils.converters import apply_all, str_to_number, Converters, Size
 from ..utils.geometry import Angle, Coordinates, Vector, rotate
 from ..utils.layout import Position
 from ..layout_generator import LayoutGenerator
@@ -21,17 +21,23 @@ and a list for created SVG normal elements.
 
 
 @dataclass
+class SVGArrowCfg:
+    "Basic configuration for SVG Arrow (Path + head) elements."
+
+    head_length: float = 3
+    "Head length."
+
+
+@dataclass
 class SVGCircleCfg:
     "Basic configuration for SVG Circle elements."
     pass
 
 
 @dataclass
-class SVGArrowCfg:
-    "Basic configuration for SVG Arrow (Path + head) elements."
-
-    head_length: float = 3
-    "Head length."
+class SVGRectangleCfg:
+    "Basic configuration for SVG Rectangle elements."
+    pass
 
 
 @dataclass
@@ -142,6 +148,7 @@ class SVGExporter(Exporter):
                 cell_pos = Coordinates(col, row)
                 self._log.debug(f"Generating cell {Vector(col,row)}")
                 cell = grid.cell(cell_pos)
+                self._log.debug(f"Content={[s.__class__.__name__ for s in cell.content]}")
                 # TODO Manage layout
                 layout_pos = layout_manager.generate(grid, cell_pos)
                 # Create shapes
@@ -183,7 +190,11 @@ class SVGExporter(Exporter):
         shape_id = f"{shape.__class__.__name__.lower()}-{cell_position[0]+1}-{cell_position[1]+1}-{shape_index}"
         if isinstance(shape, Circle):
             definitions, elements = self.create_circle(
-                shape, grid, cell_position, shape_center=shape_center, shape_id=shape_id
+                shape,
+                grid,
+                cell_position,
+                shape_center=shape_center,
+                shape_id=shape_id,
             )
         elif isinstance(shape, Arrow):
             definitions, elements = self.create_arrow(
@@ -193,7 +204,18 @@ class SVGExporter(Exporter):
                 shape_center=shape_center,
                 shape_id=shape_id,
             )
-        self._log.debug(f"Shape {shape_id} created")
+        elif isinstance(shape, Rectangle):
+            definitions, elements = self.create_rectangle(
+                shape,
+                grid,
+                cell_position,
+                shape_center=shape_center,
+                shape_id=shape_id,
+            )
+        else:
+            self._log.info(f"No idea how to export shape '{shape.__class__.__name__}'")
+        if len(elements) > 0:
+            self._log.debug(f"Shape {shape_id} created")
         return definitions, elements
 
     def create_arrow(
@@ -221,25 +243,17 @@ class SVGExporter(Exporter):
             f"Arrow: base {arrow_start}=>{arrow_end}, length_full={arrow_length_full} (supposed={grid.cfg.cell_size * str_to_number(self.exporter_cfg.shape_base_cell_ratio)}), distance={arrow_start.distance(arrow_end)}"
         )
         # Rotate
-        desired_angle: Angle = grid.cell(cell_pos).extract(
-            "orientation", shape.orientation, self.exporter_cfg.starting_angle
-        )
-        current_angle = self.exporter_cfg.starting_angle
-        self._log.debug(f"Arrow rotation: {current_angle} => {desired_angle}")
-        if desired_angle and desired_angle != self.exporter_cfg.starting_angle:
-            angle: Angle = self.exporter_cfg.starting_angle - desired_angle
-            arrow_start = rotate(arrow_start, angle)
-            arrow_end = rotate(arrow_end, angle)
-            self._log.debug(
-                f"Arrow rotation: after {arrow_start}=>{arrow_end} distance={arrow_start.distance(arrow_end)}"
-            )
+        desired_angle, current_angle = self._get_angles(shape, grid, cell_pos)
+        cx,cy = apply_all(Converters.to_float(2), shape_center.x, shape_center.y)
+        transform = None
+        if desired_angle and desired_angle != current_angle:
+            transform = f"rotate({360-desired_angle.degrees} {cx} {cy})"
+            self._log.debug(f"Arrow rotation: {current_angle} => {desired_angle}")
         # Re-center in the middle of the cell
         arrow_start = shape_center + arrow_start
         arrow_end = shape_center + arrow_end
         arrow_start = arrow_start.apply(Converters.to_float(2))
         arrow_end = arrow_end.apply(Converters.to_float(2))
-        # TODO apply translation if needed
-        # https://math.stackexchange.com/questions/2204520/how-do-i-rotate-a-line-segment-in-a-specific-point-on-the-line
         self._log.debug(f"Arrow: final {arrow_start}=>{arrow_end}, fill={shape_fill}")
         # Create SVG definition for head
         head_path = svg.Path(fill=shape_fill, d="M0,0 V4 L2,2 Z")
@@ -262,6 +276,7 @@ class SVGExporter(Exporter):
                 marker_end=f"url(#{head_def_id})",
                 stroke_width="2",
                 fill=shape_fill,
+                transform=transform,
                 stroke=shape_fill,
                 d=f"M {arrow_start[0]},{arrow_start[1]} {arrow_end[0]},{arrow_end[1]}",
             )
@@ -293,6 +308,50 @@ class SVGExporter(Exporter):
                 r=radius,
             )
         ]
+
+    def create_rectangle(
+            self,
+            shape: Rectangle,
+            grid: Grid,
+            cell_pos: Coordinates,
+            shape_center: Coordinates | None = None,
+            shape_id: str | None = None,
+    ) -> SVGElementCreation:
+        shape_color = grid.shapes_cfg.extract("fill", shape.fill)
+        height = grid.calculate_size(
+                shape.height, base=self.exporter_cfg.shape_base_cell_ratio
+            )
+        width = grid.calculate_size(
+                shape.width, base=self.exporter_cfg.shape_base_cell_ratio
+            )
+        x,y = shape_center.x - width / 2, shape_center.y - height / 2
+        # Check for Rotation
+        desired_angle, current_angle = self._get_angles(shape, grid, cell_pos)
+        transform = None
+        if desired_angle and desired_angle != current_angle:
+            transform = f"rotate({desired_angle.degrees} {shape_center.x} {shape_center.y})"
+            self._log.debug(f"Rotation: rotate({desired_angle.degrees} {shape_center.x} {shape_center.y})")
+        # Normalise all values
+        x,y,height,width = apply_all(Converters.to_float(2), x, y, height, width)
+        svg_rectangle = svg.Rect(
+                id=shape_id,
+                x=x,
+                y=y,
+                rx=shape.border_radius,
+                height=height,
+                width=width,
+                fill=shape_color,
+                transform=transform,
+            )
+        self._log.debug(f"Rectangle=(xy={(x,y)}, height={height}, width={width}, fill={shape_color}, transform={transform})")
+        return {}, [svg_rectangle]
+
+    def _get_angles(self, shape: OrientableShape, grid: Grid, cell_pos: Coordinates) -> tuple[Angle,Angle]:
+        desired_angle: Angle = grid.cell(cell_pos).extract(
+            "orientation", shape.orientation, self.exporter_cfg.starting_angle
+        )
+        current_angle = self.exporter_cfg.starting_angle
+        return desired_angle, current_angle
 
     @classmethod
     def normalize_id(cls, s: str):
