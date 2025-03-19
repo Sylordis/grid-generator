@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 
 
 from .shapes import Shape
-from .utils.converters import is_percentile, str_to_number
+from .utils.converters import is_percentile, str_to_number, Size
 from .utils.geometry import Angle, Coordinates, Vector
 from .utils.layout import Layout, Position
 from .utils.searchable import Searchable
@@ -60,11 +60,17 @@ class ShapesConfig(Searchable):
     """
 
     border_color: Color | None = None
-    "Color of the grid border."
+    "Color of the shape border."
     border_width: int = 0
-    "Default border width."
+    "Default shape border width."
     fill: Color | None = None
     "Default colour of the objects in the grid."
+    base_cell_ratio: Size = "80%"
+    "Base ratio for a shape according to cell size."
+    base_cell_ratio_2: Size = "50%"
+    "Second base ratio for a shape according to cell size."
+    starting_angle = Angle(0)
+    "Starting angle for all shapes."
 
     def __post_init__(self):
         if not self.fill:
@@ -172,3 +178,25 @@ class Grid:
         if all_percentiles:
             value *= self.cfg.cell_size
         return float(value)
+
+    def calculate_dimensions(
+        self,
+        shape: Shape,
+        default_width: Size = None,
+        default_height: Size = None,
+    ) -> tuple[float, float]:
+        """
+        Calculate both width and height based on shape's configuration and current grid's default configuration.
+
+        :param shape: shape to calculate the dimensions of
+        :param default_width: default width to use
+        :param default_height: default height to use
+        :return: a tuple with calculated (width,height)
+        """
+        if not default_width:
+            default_width = self.shapes_cfg.base_cell_ratio
+        width = self.calculate_size(shape.width, default=default_width)
+        if not default_height:
+            default_height = self.shapes_cfg.base_cell_ratio
+        height = self.calculate_size(shape.height, default=default_height)
+        return width, height

@@ -46,7 +46,7 @@ def str_to_number(value) -> float:
     return ret
 
 
-def apply_all(m: Callable[[],Any], *values) -> tuple:
+def apply_all(m: Callable[[], Any], *values) -> tuple:
     """
     Applies a method to all provided values and return all values as a tuple to be unpacked.
 

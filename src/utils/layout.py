@@ -30,7 +30,7 @@ class Position:
     valign: PositionShardVertical | None
     halign: PositionShardHorizontal | None
     shortcuts: list[str] | None = None
-    relative_coords: Vector = None
+    relative_coords: Vector | None = None
     _angle: Angle | int | float | None = None
 
     @property
@@ -162,7 +162,7 @@ class LayoutType(StrEnum):
     # "Layout will be going equally between X and Y axis."
 
 
-_LAYOUT_SHORTCUTS: dict[str,str] = {
+_LAYOUT_SHORTCUTS: dict[str, str] = {
     "horizontal": "line[L,R]",
     "rhorizontal": "line[R,L]",
     "vertical": "line[T,B]",
@@ -179,7 +179,9 @@ class Layout(Searchable):
 
     @staticmethod
     def is_layout(o) -> bool:
-        return any([o.startswith(t) for t in LayoutType]) or Layout.is_layout_shortcut(o)
+        return any([o.startswith(t) for t in LayoutType]) or Layout.is_layout_shortcut(
+            o
+        )
 
     @staticmethod
     def is_layout_shortcut(o) -> bool:

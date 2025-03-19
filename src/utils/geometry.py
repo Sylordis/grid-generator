@@ -37,9 +37,7 @@ class Vector:
         if isinstance(o, (int, float)):
             npos = Vector(*[v + o for v in self.coords])
         if isinstance(o, (list, Vector, tuple)):
-            npos = Vector(
-                *[a + b for a, b in zip_longest(self.coords, o.coords, fillvalue=0)]
-            )
+            npos = Vector(*[a + b for a, b in zip_longest(self.coords, o, fillvalue=0)])
         return npos
 
     def __and__(self, o):
@@ -123,7 +121,12 @@ class Vector:
         return f"({",".join(map(str, self.coords))})"
 
     def __sub__(self, o):
-        return self.__add__(-o)
+        npos = self
+        if isinstance(o, (int, float)):
+            npos = Vector(*[v - o for v in self.coords])
+        if isinstance(o, (list, Vector, tuple)):
+            npos = Vector(*[a - b for a, b in zip_longest(self.coords, o, fillvalue=0)])
+        return npos
 
     def __truediv__(self, o):
         if isinstance(o, (float, int)):
@@ -135,6 +138,7 @@ class Vector:
 
 
 Coordinates: TypeAlias = Vector
+Point: TypeAlias = Vector
 
 
 class AngleMeasurement(StrEnum):
@@ -158,6 +162,16 @@ class Angle:
         else:
             self._angle = angle * 180 / math.pi
 
+    def __add__(self, o):
+        ret = None
+        if isinstance(o, (int, float)):
+            ret = Angle(self.degrees + o)
+        elif isinstance(o, Angle):
+            ret = Angle(self.degrees + o.degrees)
+        else:
+            raise TypeError("Unsupported operand type for +")
+        return ret
+
     def __eq__(self, o):
         equal = False
         if isinstance(o, Angle):
@@ -168,7 +182,7 @@ class Angle:
         return Angle(-self._angle)
 
     def __sub__(self, o):
-        return Angle(self._angle - o._angle)
+        return self.__add__(-o)
 
     def __repr__(self):
         return f"{self.degrees}°"

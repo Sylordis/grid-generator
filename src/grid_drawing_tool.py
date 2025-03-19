@@ -7,7 +7,17 @@ import re
 from .cfg_parser import CfgParser
 from .exporters import Exporter, SVGExporter
 from .grid import Cell, Grid, GridConfig
-from .shapes import Shape, Arrow, Circle, Rectangle
+from .shapes import (
+    Shape,
+    Arrow,
+    Circle,
+    Diamond,
+    Ellipse,
+    Hexagon,
+    Rectangle,
+    Star,
+    Triangle,
+)
 from .utils.symbols import GridSymbol, ShapeSymbol
 
 
@@ -40,7 +50,8 @@ class GridDrawingTool:
             self._set_cfg(cfg)
         self.grid_cfg = None
         "Overall grid configuration."
-        self._cfg_interpretor = CfgParser()
+        self._cfg_parser = CfgParser()
+        "Grid/Cell configuration parser."
 
     def _set_cfg(self, cfg):
         """
@@ -136,18 +147,34 @@ class GridDrawingTool:
         if len(cell_text) > 0:
             cell_text_processed = cell_text
             # Matching config
-            pattern_cfg = r"^(\{[^}]+\})"
+            pattern_cfg = (
+                r"^("
+                + re.escape(GridSymbol.CFG_START)
+                + "[^"
+                + GridSymbol.CFG_END
+                + "]+"
+                + re.escape(GridSymbol.CFG_END)
+                + ")"
+            )
             match_cfg = re.match(pattern_cfg, cell_text)
             if match_cfg:
                 cell_cfg = match_cfg.group(0)
                 cell_text_processed = cell_text[len(cell_cfg) :]
                 self._log.debug(f"Config matches: {cell_cfg}, {len(cell_cfg)}")
                 if cell_cfg:
-                    cell_cfg = cell_cfg[1:-1].split(GridSymbol.PARAMS_SEPARATOR)
-                    cell.update(self._cfg_interpretor.interpret(cell_cfg))
+                    cell_cfg = cell_cfg[1:-1].split(GridSymbol.UNIVERSAL_SEPARATOR)
+                    cell.update(self._cfg_parser.interpret(cell_cfg))
             # Matching shapes
             self._log.debug(f"Matching shapes: {cell_text_processed}")
-            pattern = r"((\d*)([A-Z][a-z]*)(\{([^}]+)\})?)"
+            pattern = (
+                r"((\d*)([A-Z][a-z]*)("
+                + re.escape(GridSymbol.CFG_START)
+                + "([^"
+                + GridSymbol.CFG_END
+                + "]+)"
+                + re.escape(GridSymbol.CFG_END)
+                + ")?)"
+            )
             matches = re.findall(pattern, cell_text_processed)
             self._log.debug(f"Matching: {matches}")
             for group in matches:
@@ -172,20 +199,32 @@ class GridDrawingTool:
         if n:
             ni = int(n)
         if shape_cfg:
-            shape_cfg = list(filter(None, shape_cfg.split(GridSymbol.PARAMS_SEPARATOR)))
-        cfg = self._cfg_interpretor.interpret(shape_cfg)
+            shape_cfg = list(
+                filter(None, shape_cfg.split(GridSymbol.UNIVERSAL_SEPARATOR))
+            )
+        cfg = self._cfg_parser.interpret(shape_cfg)
         self._log.debug(f"shape: x{ni}, {shape_id}, {shape_cfg}, {cfg}")
         match shape_id:
             case ShapeSymbol.ARROW | "Arrow":
                 shape = Arrow(**cfg)
             case ShapeSymbol.CIRCLE | "Circle":
                 shape = Circle(**cfg)
+            case ShapeSymbol.DIAMOND | "Diamond":
+                shape = Diamond(**cfg)
+            case ShapeSymbol.ELLIPSE | "Ellipsis":
+                shape = Ellipse(**cfg)
+            case ShapeSymbol.HEXAGON | "Hexagon":
+                shape = Hexagon(**cfg)
             case ShapeSymbol.RECTANGLE | "Rectangle":
                 shape = Rectangle(**cfg)
             case ShapeSymbol.SQUARE | "Square":
                 if "width" in cfg:
                     cfg["height"] = cfg["width"]
                 shape = Rectangle(**cfg)
+            case ShapeSymbol.STAR | "Star":
+                shape = Star(**cfg)
+            case ShapeSymbol.TRIANGLE | "Triangle":
+                shape = Triangle(**cfg)
             case _:
                 self._log.error(f"Unknown shape ID '{shape_id}'")
         if shape:
