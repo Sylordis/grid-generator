@@ -40,7 +40,7 @@ Sizes can be described in two manners: either fixed or relative.
 
 Directions, positions and angles are all managed in the same way, with a premade list of simple directions/positions.
 
-Angles are managed according to the mathematical [unit circle](https://en.wikipedia.org/wiki/Unit_circle) ([shortcut to picture](https://en.wikipedia.org/wiki/File:Unit_circle_angles_color.svg)).
+Angles are managed according to the mathematical [unit circle](https://en.wikipedia.org/wiki/Unit_circle) ([shortcut to picture](https://en.wikipedia.org/wiki/File:Unit_circle_angles_color.svg)) and the default orientation is towards the **top**.
 
 Directions and positions both accept either the mnemonic or the shortcut.
 
@@ -48,14 +48,15 @@ Directions and positions both accept either the mnemonic or the shortcut.
 
 | Direction | Mnemonic | Shortcut | Angle |
 | ---       | :---:    | :---:    | ---   |
-| Bottom | `bottom` | `B` | 270° |
-| Bottom Left | `bottom_left` | `Z` | 225° |
-| Bottom Right | `bottom_right` | `C` | 315° |
+| Bottom | `bottom` | `B` | 180° |
+| Bottom Left | `bottom_left` | `Z` | 135° |
+| Bottom Right | `bottom_right` | `C` | 225° |
 | Center | `center` | `S` | Cannot be an angle! |
-| Left | `left` | `L` | 180° |
-| Top | `top` | `T` | 90° |
-| Top Left | `top_left` | `Q` | 135° |
-| Top Right | `top_right` | `E` | 45° |
+| Left | `left` | `L` | 90° |
+| Right | `right` | `R` | 270° |
+| Top | `top` | `T` | 0° |
+| Top Left | `top_left` | `Q` | 45° |
+| Top Right | `top_right` | `E` | 315° |
 
 In case you find the shortcuts confusing, diagonal directions/positions are determined by QWERTY keyboard layout, centered on WQSD, `S` being at the center.
 

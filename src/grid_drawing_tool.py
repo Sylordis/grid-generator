@@ -218,9 +218,8 @@ class GridDrawingTool:
             case ShapeSymbol.RECTANGLE | "Rectangle":
                 shape = Rectangle(**cfg)
             case ShapeSymbol.SQUARE | "Square":
-                if "width" in cfg:
-                    cfg["height"] = cfg["width"]
                 shape = Rectangle(**cfg)
+                shape._is_square = True
             case ShapeSymbol.STAR | "Star":
                 shape = Star(**cfg)
             case ShapeSymbol.TRIANGLE | "Triangle":

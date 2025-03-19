@@ -34,7 +34,7 @@ and a list for created SVG normal elements.
 class SVGArrowCfg:
     "Basic configuration for SVG Arrow (Path + head) elements."
 
-    head_length: float = 3
+    head_length: float = 4
     "Head length."
 
 
@@ -207,24 +207,22 @@ class SVGExporter(Exporter):
         svg_params = self._extract_standard_svg_params(shape, grid)
         # Create arrow
         length_full, *_ = grid.calculate_dimensions(shape)
-        # The ends of the arrow are created around (0,0) directly, just need to add cell_center to them after rotation.
-        arrow_start = Coordinates(-length_full / 2, 0)
         arrow_end = Coordinates(
-            length_full / 2 - self.exporter_cfg.arrows.head_length, 0
+            0, -length_full / 2 + self.exporter_cfg.arrows.head_length
         )
-        self._log.debug(
-            f"Arrow: base {arrow_start}=>{arrow_end}, length_full={length_full}, distance={arrow_start.distance(arrow_end)}"
+        arrow_start = Coordinates(0, length_full / 2)
+        arrow_start, arrow_end = tuple(
+            (shape_center + p).apply(Converters.to_float(2))
+            for p in [arrow_start, arrow_end]
         )
         # Rotate
         svg_params["transform"] = self._calculate_rotation_transform(
             self._get_angles(shape, grid, cell_pos), shape_center
         )
+        self._log.debug(
+            f"Arrow: base {arrow_start}=>{arrow_end}, length_full={length_full}, distance={arrow_start.distance(arrow_end)}, params={svg_params}"
+        )
         # Re-center in the middle of the cell
-        arrow_start = shape_center + arrow_start
-        arrow_end = shape_center + arrow_end
-        arrow_start = arrow_start.apply(Converters.to_float(2))
-        arrow_end = arrow_end.apply(Converters.to_float(2))
-        self._log.debug(f"Arrow: final {arrow_start}=>{arrow_end}, params={svg_params}")
         # Create SVG definition for head
         head_path = svg.Path(fill=svg_params["fill"], d="M0,0 V4 L2,2 Z")
         head_def_id = f"arrow-head-{self.normalize_id(svg_params["fill"])}-{self.normalize_id(length_full)}"
@@ -284,15 +282,17 @@ class SVGExporter(Exporter):
         shape_id: str | None = None,
     ) -> SVGElementCreation:
         svg_params = self._extract_standard_svg_params(shape, grid)
-        width, height = grid.calculate_dimensions(shape)
+        width, height = grid.calculate_dimensions(
+            shape, default_width=grid.shapes_cfg.base_cell_ratio_2
+        )
         svg_params["transform"] = self._calculate_rotation_transform(
             self._get_angles(shape, grid, cell_pos), shape_center
         )
         points = [
+            shape_center - Vector(0, height / 2),
             shape_center + Vector(width / 2, 0),
             shape_center + Vector(0, height / 2),
             shape_center - Vector(width / 2, 0),
-            shape_center - Vector(0, height / 2),
         ]
         discreet_points = self._discreetise(points)
         self._log.debug(
@@ -310,7 +310,9 @@ class SVGExporter(Exporter):
         shape_id: str | None = None,
     ) -> SVGElementCreation:
         svg_params = self._extract_standard_svg_params(shape, grid)
-        width, height = grid.calculate_dimensions(shape)
+        width, height = grid.calculate_dimensions(
+            shape, default_height=grid.shapes_cfg.base_cell_ratio_2
+        )
         rx, ry = width / 2, height / 2
         cx, cy, rx, ry = self.normalize_numbers(shape_center.x, shape_center.y, rx, ry)
         self._log.debug(
@@ -353,7 +355,15 @@ class SVGExporter(Exporter):
         shape_id: str | None = None,
     ) -> SVGElementCreation:
         svg_params = self._extract_standard_svg_params(shape, grid)
-        width, height = grid.calculate_dimensions(shape)
+        defaults = {
+            "default_width": grid.shapes_cfg.base_cell_ratio,
+            "default_height": (
+                grid.shapes_cfg.base_cell_ratio
+                if shape._is_square
+                else grid.shapes_cfg.base_cell_ratio_2
+            ),
+        }
+        width, height = grid.calculate_dimensions(shape, **defaults)
         x, y = shape_center.x - width / 2, shape_center.y - height / 2
         svg_params["transform"] = self._calculate_rotation_transform(
             self._get_angles(shape, grid, cell_pos), shape_center
@@ -388,8 +398,8 @@ class SVGExporter(Exporter):
             shape, default_height=grid.shapes_cfg.base_cell_ratio_2
         )
         radius_outer, radius_inner = width / 2, height / 2
-        original_outer_point = Vector(radius_outer, 0)
-        original_inner_point = Vector(radius_inner, 0)
+        original_outer_point = Vector(0, -radius_outer)
+        original_inner_point = Vector(0, -radius_inner)
         points = [shape_center + original_outer_point]
         is_inner = True
         step = 180 / int(shape.sides)
@@ -429,9 +439,9 @@ class SVGExporter(Exporter):
         points = [
             shape_center + p
             for p in [
-                Vector(width / 2, 0),
+                Vector(0, -height / 2),
+                Vector(width / 2, height / 2),
                 Vector(-width / 2, height / 2),
-                Vector(-width / 2, -height / 2),
             ]
         ]
         discreet_points = self._discreetise(points)

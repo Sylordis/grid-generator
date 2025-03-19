@@ -73,11 +73,7 @@ class Hexagon(OrientableShape):
 @dataclass
 class Rectangle(OrientableShape):
     border_radius: int = 0
-
-
-# @dataclass
-# class Polygon(OrientableShape):
-#     vertices : int = 0
+    _is_square: bool = False
 
 
 @dataclass

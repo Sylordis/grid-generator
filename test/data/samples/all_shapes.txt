@@ -1,4 +1,4 @@
-A|C|D{80%;66%}|
-R{75%;50%}|Sq|St{80%;50%}|T
-||E{50%;80%}|H
+A|C|D|
+R|Sq||T
+St||E|H
 St{sides=6}|St{sides=7}|St{sides=8}|St{sides=10}|St{sides=12}

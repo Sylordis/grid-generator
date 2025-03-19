@@ -56,38 +56,38 @@ class PositionFactory:
     def __init__(self):
         self._log = logging.getLogger()
         self._positions: list[Position] = [
-            Position(PositionShardVertical.BOTTOM, None, ["B"], Vector(0.5, 1), 270),
+            Position(PositionShardVertical.BOTTOM, None, ["B"], Vector(0.5, 1), 180),
             Position(
                 PositionShardVertical.BOTTOM,
                 PositionShardHorizontal.LEFT,
                 ["Z"],
                 Vector(0, 1),
-                225,
+                135,
             ),
             Position(
                 PositionShardVertical.BOTTOM,
                 PositionShardHorizontal.RIGHT,
                 ["C"],
                 Vector(1, 1),
-                315,
+                225,
             ),
             Position(None, PositionShardHorizontal.LEFT, ["L"], Vector(0, 0.5), 180),
-            Position(None, PositionShardHorizontal.RIGHT, ["R"], Vector(1, 0.5), 0),
-            Position(PositionShardVertical.TOP, None, ["T"], Vector(0.5, 0), 90),
+            Position(None, PositionShardHorizontal.RIGHT, ["R"], Vector(1, 0.5), 270),
+            Position(PositionShardVertical.TOP, None, ["T"], Vector(0.5, 0), 0),
             Position(None, None, ["S"], Vector(0.5, 0.5)),
             Position(
                 PositionShardVertical.TOP,
                 PositionShardHorizontal.LEFT,
                 ["Q"],
                 Vector(0, 0),
-                135,
+                45,
             ),
             Position(
                 PositionShardVertical.TOP,
                 PositionShardHorizontal.RIGHT,
                 ["E"],
                 Vector(1, 0),
-                45,
+                315,
             ),
         ]
 
