@@ -4,10 +4,11 @@ import logging
 
 
 from .shapes import Shape
-from .utils.converters import is_percentile, str_to_number, Size
+from .utils.converters import is_percentile, str_to_number
 from .utils.geometry import Angle, Coordinates, Vector
 from .utils.layout import Layout, Position
 from .utils.searchable import Searchable
+from .utils.units import Size
 
 
 @dataclass
@@ -42,7 +43,7 @@ class GridConfig(Searchable):
     "Color of the grid border."
     border_width: int = 1
     "Border width (in px)."
-    cell_size: int = 16
+    cell_size: float = 16
     "Size of the grid cells (in pixels)."
     grid_over_components: bool = True
     "Whether the grid is displayed on top of the components (True, default) or under (False)."
@@ -66,9 +67,9 @@ class ShapesConfig(Searchable):
     "Default shape border width."
     fill: Color | None = None
     "Default colour of the objects in the grid."
-    base_cell_ratio: Size = "80%"
+    base_cell_ratio: Size = Size("80%")
     "Base ratio for a shape according to cell size."
-    base_cell_ratio_2: Size = "50%"
+    base_cell_ratio_2: Size = Size("50%")
     "Second base ratio for a shape according to cell size."
     starting_angle = Angle(0)
     "Starting angle for all shapes."
@@ -151,7 +152,9 @@ class Grid:
         coords = top_left_corner + position.relative_coords * self.cfg.cell_size
         return coords
 
-    def calculate_size(self, *factors, base=None, default=None) -> float:
+    def calculate_size(
+        self, *factors: tuple[Size], base: Size = None, default: Size = None
+    ) -> float:
         """
         Calculates a size based on multiple factors.
         It will first try to multiply all factors together in provided order.
@@ -164,25 +167,24 @@ class Grid:
         :param default: default size to provide in case there are no factors provided
         :return: a number
         """
-        all_percentiles = True
-        had_values = False
+        all_relative = True
         value = 1.0
         if base:
-            value *= str_to_number(base)
-        orig = value
-        self._log.debug(f"csize: [{factors}] base={base} default={default}, value={value} orig={value}")
+            value *= base.value
+        self._log.debug(
+            f"calc. size: [{factors}] base={base} default={default}, value={value} orig={value}"
+        )
         for f in factors:
             if f:
-                had_values = True
-                value *= str_to_number(f)
-                self._log.debug(f"csizef: {f} => {value}")
-                if not is_percentile(f):
-                    all_percentiles = False
+                value *= f.value
+                self._log.debug(f"calc sizef: {f} => {value}")
+                if not f.is_relative():
+                    all_relative = False
                     break
-        if not had_values and default:
-            value = str_to_number(default)
-            all_percentiles = is_percentile(default)
-        if all_percentiles:
+        if not any(factors) and default:
+            value = default.value
+            all_relative = default.is_relative()
+        if all_relative:
             value *= self.cfg.cell_size
         return float(value)
 
@@ -203,9 +205,9 @@ class Grid:
         if not default_width:
             default_width = self.shapes_cfg.base_cell_ratio
         width = self.calculate_size(shape.width, default=default_width)
-        self._log.debug(f"width: {width}, base={default_width}")
+        self._log.debug(f"width: {width}, default={default_width}")
         if not default_height:
             default_height = self.shapes_cfg.base_cell_ratio
         height = self.calculate_size(shape.height, default=default_height)
-        self._log.debug(f"height: {height}, base={default_height}")
+        self._log.debug(f"height: {height}, default={default_height}")
         return width, height

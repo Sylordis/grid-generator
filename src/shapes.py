@@ -5,6 +5,7 @@ from typing import Any
 
 
 from .utils.geometry import Angle
+from .utils.units import Size
 
 
 @dataclass
@@ -12,16 +13,16 @@ class Shape(ABC):
     border_color: Color | None = None
     border_width: int = 0
     fill: Color | None = None
-    height: Any = None
+    height: Size | None = None
     # opacity: float | None = None TODO
     orientation: Angle | None = None
     # stroke_opacity: float | None = None TODO
-    width: Any = None
+    width: Size | None = None
 
 
 @dataclass
 class Arrow(Shape):
-    head: Any = "150%"
+    head: Size | None = Size("150%")
 
 
 @dataclass

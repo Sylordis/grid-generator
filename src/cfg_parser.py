@@ -7,6 +7,7 @@ from typing import Any
 from .utils.geometry import Angle
 from .utils.layout import Layout, PositionFactory
 from .utils.symbols import GridSymbol
+from .utils.units import Size
 
 
 class CfgParser:
@@ -32,9 +33,6 @@ class CfgParser:
         for param in cfg_txt:
             match = re.match(r"([a-z]+(-[a-z-]+)?)=(.*)", param)
             angle_match = re.match(r"(-?\d+)d", param)
-            size_match = re.match(
-                r"(\d+%? *x *\d+%?)|(\d+%? *x)|(x *\d+%?)|(\d+%?)", param
-            )
             try:
                 color = Color(param)
             except ValueError:
@@ -42,16 +40,13 @@ class CfgParser:
             if match:
                 cfg[match.group(1).replace("-", "_")] = match.group(3)
             elif Layout.is_layout(param):
-                cfg.update(self._do_layout(param))
-            elif self._position_factory.is_layouting(param):
+                cfg.update(self._parse_layout(param))
+            elif self._position_factory.is_position(param):
                 cfg["orientation"] = self._position_factory.get_position(param).angle
             elif angle_match:
                 cfg["orientation"] = Angle(float(angle_match.group(1)))
-            elif size_match:
-                if "x" in param:
-                    sizes.extend([None if not p else p for p in param.split("x")])
-                else:
-                    sizes.append(param)
+            elif Size.is_size(param):
+                sizes = self._manage_sizes(param, sizes)
             elif color:
                 colors.append(color)
             else:
@@ -61,31 +56,42 @@ class CfgParser:
         self._log.debug(f"cfg={cfg}")
         return cfg
 
-    def _do_layout(self, txt: str) -> dict[str, Any]:
+    def _manage_sizes(self, param: str, sizes: list):
+        if "x" in param:
+            sizes = sizes + [None if not p else Size(p) for p in param.split("x")]
+        else:
+            sizes = sizes + [Size(param)]
+        return sizes
+
+    def _parse_layout(self, txt: str) -> dict[str, Any]:
         self._log.debug(f"layouting=[{txt}]")
         ret = {}
         ntxt = txt
+        sizes = []
+        keypoints = []
         if Layout.is_layout_shortcut(ntxt):
             ntxt = Layout.expand_shortcut(ntxt)
+        self._log.debug(f"Layout txt={ntxt}")
         if GridSymbol.PARAMS_START in ntxt:
             layout_cfg = ntxt[ntxt.index(GridSymbol.PARAMS_START) :]
             ntxt = ntxt[: -len(layout_cfg)]
-            options = layout_cfg[1:-1].split(GridSymbol.PARAMS_SEPARATOR)
-            self._log.debug(f"layout options: {options}")
-            if len(options) > 0:
-                ret["layout.start"] = self._position_factory.get_position(options[0])
-            if len(options) > 1:
-                ret["layout.end"] = self._position_factory.get_position(options[1])
+            params = layout_cfg[1:-1].split(GridSymbol.PARAMS_SEPARATOR)
+            self._log.debug(f"layout options: {params}")
+            for param in params:
+                if self._position_factory.is_position(param):
+                    keypoints.append(self._position_factory.get_position(param))
+                elif Size.is_size(param):
+                    sizes.append(Size(param))
+                else:
+                    self._log.warning(f"Unknown layout parameter '{param}'.")
+        ret.update({f"layout.{k}": p for k, p in self._do_sizes(sizes)})
+        ret["layout.keypoints"] = keypoints
         ret["layout.display_type"] = ntxt
         return ret
 
     def _do_sizes(self, sizes) -> dict[str, Any]:
         "Manages sizes."
-        cfg = {}
-        self._log.debug(f"Sizes: {sizes}")
-        for p, v in zip(["width", "height"], sizes):
-            cfg[p] = v
-        return cfg
+        return {p: v for p, v in zip(["width", "height"], sizes)}
 
     def _do_colors(self, colors) -> dict[str, Any]:
         "Manages colours."

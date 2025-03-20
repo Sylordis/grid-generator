@@ -1,13 +1,12 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import StrEnum
 import logging
-import re
-from typing import TypeAlias
+from typing import Any, TypeAlias
 
 
 from .geometry import Angle, Vector
 from .searchable import Searchable
-from .symbols import GridSymbol
+from .units import Size
 
 
 class PositionShardHorizontal(StrEnum):
@@ -140,12 +139,10 @@ class PositionFactory:
             )
         return pos
 
-    def is_layouting(self, o) -> bool:
-        return (
-            o == None
-            or o in self._shard_dict
-            or o in [s for pl in self._positions for s in pl.shortcuts]
-        )
+    def is_position(self, o) -> bool:
+        return o in self._shard_dict or o in [
+            s for pl in self._positions for s in pl.shortcuts
+        ]
 
 
 class LayoutType(StrEnum):
@@ -153,13 +150,15 @@ class LayoutType(StrEnum):
     Display type of the layout, e.g. in which main axis does the layout propagates.
     """
 
-    # Ideas: Arrow, Arc, Triangle, Circle, letter-shaped
+    # BOX = "box"
+    # "Layout will be going equally between X and Y axis."
+    # CHEVRON = "chevron"
+    # CIRCLE = "circle"
+    # Layout is centred in the cell and divides the shapes all around it on a circle.
     LINE = "line"
     "Layout will be a single line."
     STACK = "stack"
     "All shapes will be stacked upon each other (default)."
-    # GRID = "grid"
-    # "Layout will be going equally between X and Y axis."
 
 
 _LAYOUT_SHORTCUTS: dict[str, str] = {
@@ -174,8 +173,28 @@ _LAYOUT_SHORTCUTS: dict[str, str] = {
 @dataclass
 class Layout(Searchable):
     display_type: LayoutType = LayoutType.STACK
-    start: Position | None = None
-    end: Position | None = None
+    keypoints: list[Position] = field(default_factory=list)
+    """
+    Key points related to the layout, e.g. where it is supposed to pass through in order.
+    By definition the first one is considered as the "start" point, the last one is the "end" point.
+    """
+    height: Size = Size("100%")
+    width: Size = Size("100%")
+
+    @property
+    def start(self):
+        return self.keypoints[0]
+
+    def has_start(self):
+        return self.has_keypoints()
+
+    @property
+    def end(self):
+        return self.keypoints[-1]
+
+    @property
+    def has_keypoints(self):
+        return len(self.keypoints) > 0
 
     @staticmethod
     def is_layout(o) -> bool:

@@ -120,7 +120,7 @@ class SVGExporter(Exporter):
         :param grid: grid to create the svg elements from
         :return: normal elements, defs elements
         """
-        # TODO
+        # TODO Create bg shapes
         return {}, []
 
     def create_svg_elements_in_grid(self, grid: Grid) -> SVGElementCreation:
@@ -204,13 +204,13 @@ class SVGExporter(Exporter):
         shape_id: str | None = None,
     ) -> SVGElementCreation:
         svg_params = self._extract_standard_svg_params(shape, grid)
-        # Create arrow
-        # TODO Use width and height
+        # TODO Use height
         length_full, *_ = grid.calculate_dimensions(shape)
         arrow_end = Coordinates(
             0, -length_full / 2 + self.exporter_cfg.arrows.head_length
         )
         arrow_start = Coordinates(0, length_full / 2)
+        # Normalise all values
         arrow_start, arrow_end = tuple(
             (shape_center + p).apply(Converters.to_float(2))
             for p in [arrow_start, arrow_end]
@@ -222,7 +222,6 @@ class SVGExporter(Exporter):
         self._log.debug(
             f"Arrow: base {arrow_start}=>{arrow_end}, length_full={length_full}, distance={arrow_start.distance(arrow_end)}, params={svg_params}"
         )
-        # Re-center in the middle of the cell
         # Create SVG definition for head
         head_path = svg.Path(fill=svg_params["fill"], d="M0,0 V4 L2,2 Z")
         head_def_id = f"arrow-head-{self.normalize_id(svg_params["fill"])}-{self.normalize_id(length_full)}"
@@ -260,7 +259,8 @@ class SVGExporter(Exporter):
     ) -> SVGElementCreation:
         svg_params = self._extract_standard_svg_params(shape, grid)
         radius = (
-            grid.calculate_size(shape.width, base=grid.shapes_cfg.base_cell_ratio) / 2
+            grid.calculate_size(shape.width, default=grid.shapes_cfg.base_cell_ratio)
+            / 2
         )
         self._log.debug(f"Circle=(xy={shape_center}, r={radius}, params={svg_params})")
         return {}, [
