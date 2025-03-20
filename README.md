@@ -34,7 +34,7 @@ You can also run `python -m grid-generator --help` for help.
 From outside this repo, inside the virtual environment:
 
 ```bash
-python -m grid-generator -d grid-generator/dist grid-generator/test/data
+python -m grid-generator -d grid-generator/dist grid-generator/test/data/*.txt
 ```
 
 ## Input files

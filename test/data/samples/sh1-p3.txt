@@ -1,2 +1,0 @@
-A{Q}|A|A{E}
-A{L}|C{green}|A{R}

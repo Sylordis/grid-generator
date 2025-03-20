@@ -94,7 +94,7 @@ In the following table, the `monospace` characters are the normal keyboard ones,
 
 Properties do not have to be provided in the order indicated by the table.
 
-| property | native? | default | description |
+| Property | Native? | Default | Description |
 | ---      | :---:   | :---:   | ---         |
 | `bg_color` | y | `None` | Background color of the cell. |
 | `layout` | y | `stack` | Layout of the shapes in the cell. |
@@ -144,14 +144,14 @@ Planned:
 
 Properties do not have to be provided in the order indicated by the table, although the native index order is important to consider.
 
-| property | native? | unit | default | shapes | description |
+| Property | Native? | Unit | Default | Shapes | Description |
 | ---      | :---:   | :---:| :---:   | :---:  | ---         |
 | `border-color` | n | int | `None` | all | Colour of the shape border.<br/>Only applicable if `border_width` is set. |
 | `border-radius` | n | int | `0` | `Square`, `Rectangle` | Radius of the corners (in pixels). |
 | `border-width` | n | int | `0` | all | Width of the shape border (in pixels).<br/>Only applicable if `border_color` is set. |
 | `fill` | 1 | Color | `#FF0000` | all | Fill colour of the shape. |
 | `height` | 3 | Size | `80%`(1) or `50%`(2) | all | Height of the shape. Shapes use (1) if not specified otherwise. |
-| `orientation` | 4 | Angle/Direction | 3 | `None` | all except `Circle` | Orientation of the shape. |
+| `orientation` | 4 | Angle/Direction | `0°` | all | Orientation of the shape. |
 | `sides` | n | int | `5` | `Star` | Number of vertices outside. |
 | `width` | 2 | Size | `80%`(1) or `50%`(2) | all | Width of the shape. Shapes use (1) if not specified otherwise. |
 
