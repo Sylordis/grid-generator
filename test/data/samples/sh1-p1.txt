@@ -1,2 +1,2 @@
-|A{T}|
-|C{fill=green}|
+|A|
+|C{green}|

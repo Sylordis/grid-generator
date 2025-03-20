@@ -71,7 +71,7 @@ class PositionFactory:
                 Vector(1, 1),
                 225,
             ),
-            Position(None, PositionShardHorizontal.LEFT, ["L"], Vector(0, 0.5), 180),
+            Position(None, PositionShardHorizontal.LEFT, ["L"], Vector(0, 0.5), 90),
             Position(None, PositionShardHorizontal.RIGHT, ["R"], Vector(1, 0.5), 270),
             Position(PositionShardVertical.TOP, None, ["T"], Vector(0.5, 0), 0),
             Position(None, None, ["S"], Vector(0.5, 0.5)),

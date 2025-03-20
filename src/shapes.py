@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import Any
 
 
-from .utils.layout import Position
+from .utils.geometry import Angle
 
 
 @dataclass
@@ -14,17 +14,13 @@ class Shape(ABC):
     fill: Color | None = None
     height: Any = None
     # opacity: float | None = None TODO
+    orientation: Angle | None = None
     # stroke_opacity: float | None = None TODO
     width: Any = None
 
 
 @dataclass
-class OrientableShape(Shape):
-    orientation: Position | None = None  # TODO Change to Angle
-
-
-@dataclass
-class Arrow(OrientableShape):
+class Arrow(Shape):
     head: Any = "150%"
 
 
@@ -42,12 +38,12 @@ class Circle(Shape):
 
 
 @dataclass
-class Diamond(OrientableShape):
+class Diamond(Shape):
     pass
 
 
 @dataclass
-class Ellipse(OrientableShape):
+class Ellipse(Shape):
     """ "
     Ellipse shape.
 
@@ -60,7 +56,7 @@ class Ellipse(OrientableShape):
     pass
 
 
-class Hexagon(OrientableShape):
+class Hexagon(Shape):
     """
     Properties
     ---
@@ -71,13 +67,13 @@ class Hexagon(OrientableShape):
 
 
 @dataclass
-class Rectangle(OrientableShape):
+class Rectangle(Shape):
     border_radius: int = 0
     _is_square: bool = False
 
 
 @dataclass
-class Star(OrientableShape):
+class Star(Shape):
     """
     Properties
     ---
@@ -90,5 +86,5 @@ class Star(OrientableShape):
 
 
 @dataclass
-class Triangle(OrientableShape):
+class Triangle(Shape):
     pass

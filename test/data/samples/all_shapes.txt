@@ -1,4 +1,5 @@
-A|C|D|
-R|Sq||T
-St||E|H
-St{sides=6}|St{sides=7}|St{sides=8}|St{sides=10}|St{sides=12}
+A|C|D|D{x25%}
+R|Sq|Sq{border-radius=4}|T
+||E|H
+St|St{sides=6}|St{sides=7}
+St{sides=8}|St{sides=10}|St{sides=12}

@@ -4,6 +4,7 @@ import re
 from typing import Any
 
 
+from .utils.geometry import Angle
 from .utils.layout import Layout, PositionFactory
 from .utils.symbols import GridSymbol
 
@@ -29,20 +30,28 @@ class CfgParser:
         colors = []
         self._log.debug(f"cfg_txt={cfg_txt}")
         for param in cfg_txt:
-            match = re.match("([a-z-]+)=(.*)", param)
-            size_match = re.match("\d+(px|%)|(\d+(px|%))?x(\d+(px|%))?", param)
+            match = re.match(r"([a-z]+(-[a-z-]+)?)=(.*)", param)
+            angle_match = re.match(r"(-?\d+)d", param)
+            size_match = re.match(
+                r"(\d+%? *x *\d+%?)|(\d+%? *x)|(x *\d+%?)|(\d+%?)", param
+            )
             try:
                 color = Color(param)
             except ValueError:
                 color = None
             if match:
-                cfg[match.group(1).replace("-", "_")] = match.group(2)
+                cfg[match.group(1).replace("-", "_")] = match.group(3)
             elif Layout.is_layout(param):
                 cfg.update(self._do_layout(param))
             elif self._position_factory.is_layouting(param):
                 cfg["orientation"] = self._position_factory.get_position(param).angle
+            elif angle_match:
+                cfg["orientation"] = Angle(float(angle_match.group(1)))
             elif size_match:
-                sizes.append(param)
+                if "x" in param:
+                    sizes.extend([None if not p else p for p in param.split("x")])
+                else:
+                    sizes.append(param)
             elif color:
                 colors.append(color)
             else:
@@ -73,6 +82,7 @@ class CfgParser:
     def _do_sizes(self, sizes) -> dict[str, Any]:
         "Manages sizes."
         cfg = {}
+        self._log.debug(f"Sizes: {sizes}")
         for p, v in zip(["width", "height"], sizes):
             cfg[p] = v
         return cfg

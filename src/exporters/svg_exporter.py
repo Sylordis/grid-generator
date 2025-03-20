@@ -8,7 +8,6 @@ from .exporter import Exporter
 from ..grid import Grid
 from ..shapes import (
     Shape,
-    OrientableShape,
     Arrow,
     Circle,
     Diamond,
@@ -206,6 +205,7 @@ class SVGExporter(Exporter):
     ) -> SVGElementCreation:
         svg_params = self._extract_standard_svg_params(shape, grid)
         # Create arrow
+        # TODO Use width and height
         length_full, *_ = grid.calculate_dimensions(shape)
         arrow_end = Coordinates(
             0, -length_full / 2 + self.exporter_cfg.arrows.head_length
@@ -311,7 +311,7 @@ class SVGExporter(Exporter):
     ) -> SVGElementCreation:
         svg_params = self._extract_standard_svg_params(shape, grid)
         width, height = grid.calculate_dimensions(
-            shape, default_height=grid.shapes_cfg.base_cell_ratio_2
+            shape, default_width=grid.shapes_cfg.base_cell_ratio_2
         )
         rx, ry = width / 2, height / 2
         cx, cy, rx, ry = self.normalize_numbers(shape_center.x, shape_center.y, rx, ry)
@@ -477,7 +477,7 @@ class SVGExporter(Exporter):
         return params
 
     def _get_angles(
-        self, shape: OrientableShape, grid: Grid, cell_pos: Coordinates
+        self, shape: Shape, grid: Grid, cell_pos: Coordinates
     ) -> tuple[Angle, Angle]:
         desired_angle: Angle = grid.cell(cell_pos).extract(
             "orientation", shape.orientation, grid.shapes_cfg.starting_angle

@@ -1,3 +1,3 @@
 {Q}A|{horizontal}2A{T}|2A{E}|A{Z}
-{L;horizontal}2A|A{Q};A{T};A{E};A{L};A{R};A{Z};A{B};A{C}||{R;vertical}A{50%;green}A{L;50%;green}
+{L;horizontal}2A|A{Q};A{T};A{E};A{L};A{R};A{Z};A{B};A{C}|A{R}|{R;vertical}A{50%;green}A{L;50%;green}
 A{Z}|A{B;100%}|A{C;orange}|A{L}

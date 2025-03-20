@@ -29,13 +29,6 @@ Properties can be declared with `name=value` or chained with their values withou
 
 Some properties can 
 
-## Sizes
-
-Sizes can be described in two manners: either fixed or relative.
-
-- Fixed: a straight number or annotated with `px` (ex: `14` or `16px`).
-- Relative: in percentage of the cell (ex: `75%`). If relative, the size will be determined according to the size of the cell.
-
 ## Directions and Positions
 
 Directions, positions and angles are all managed in the same way, with a premade list of simple directions/positions.
@@ -88,30 +81,67 @@ For all purposes and intent, shapes don't mix. A latter shape will be layed "on 
 - `vertical`: a `line` from top to bottom (equivalent to `line[T,B]`).
 
 Planned:
-- different geometric shapes (square, arrow, triangle, circle)
+- different geometric shapes (square, arrow, triangle, circle, cross)
 - `arc`
 - letter shaped
 - `grid`
 
 ## Shapes
 
-- `A` arrow
-- `C` Circle
+Shapes can be used in the input file as the shortcut or the full name.
+
+| Shape | Shortcut | Comment |
+| ---   | :---:    | ---     |
+| Arrow | `A` | `width` = length, no height yet.
+Circle | `C` | `width` = diameter, no height.
+Diamond | `D` | Uses default `width`(2).
+Ellipse | `E` | Uses default `width`(2).
+Hexagon | `H` | `width` = diameter, no height.
+Rectangle | `R` |
+Square | `Sq` | no `height`, `width` will be used for both.
+Star | `St` | `width` will be used for external diameter.<br/>`height` is used for internal diameter (uses default `width`(2)).<br/>Uses `sides`.
+Triangle | `T` |
 
 Planned:
-- `D` Diamond
+- `Cr` Cross
 - `I` Image
-- `R` Rectangle
-- `Sq` Square
-- `St` Star
-- `T` Triangle
+- `L` Line
+- `P` Polygon
+- `Te` Text
 
-### Shapes configuration properties (Shape_cfg_property)
+### Shapes configuration properties
 
-| property | native? | default | shapes | description |
-| ---      | :---:   | :---:   | :---:  | ---         |
-| `border_color` | n | `None` | all | Colour of the shape border.<br/>Only applicable if `border_width` is set. |
-| `border_width` | n | `0` | all | Width of the shape border.<br/>Only applicable if `border_color` is set. |
-| `fill` | 1 | `#FF0000` | all | Fill colour of the shape. |
-| `height` | 3 | `80%` | all | Height of the shape as size. |
-| `width` | 2 | `80%` | all | Width of the shape as  size. |
+| property | native? | unit | default | shapes | description |
+| ---      | :---:   | :---:| :---:   | :---:  | ---         |
+| `border-color` | n | int | `None` | all | Colour of the shape border.<br/>Only applicable if `border_width` is set. |
+| `border-radius` | n | int | `0` | `Square`, `Rectangle` | Radius of the corners (in pixels). |
+| `border-width` | n | int | `0` | all | Width of the shape border (in pixels).<br/>Only applicable if `border_color` is set. |
+| `fill` | 1 | Color | `#FF0000` | all | Fill colour of the shape. |
+| `height` | 3 | Size | `80%`(1) or `50%`(2) | all | Height of the shape. Shapes use (1) if not specified otherwise. |
+| `orientation` | Angle/Direction | 3 | `None` | all except `Circle` | Orientation of the shape. |
+| `sides` | n | int | `5` | `Star` | Number of vertices outside. |
+| `width` | 2 | Size | `80%`(1) or `50%`(2) | all | Width of the shape. Shapes use (1) if not specified otherwise. |
+
+## Types
+
+**Angle or Direction {#type-angle}**
+
+A fixed number (int or float, can be negative) affixed with `d` or a pre-existing [position/direction](#directions-and-positions).
+
+*Ex:* `48d`, `T`
+
+**Color {#type-color}**
+
+An hexadecimal value or a string representing a colour.
+
+*Ex:* `#FFF000`, `#0AC`, `yellow`.
+
+**Size {#type-size}**
+
+Either a fixed number (int or float) or a percentage.
+
+*Ex:* `160`,  `76%`.
+
+Both `width` and `height` can be combined in one declaration with `Size x Size` (whitespace not mandatory) and combined however you want.
+
+*Ex:* `37x` (width=37), `x5%` (width not set and height=5%), `83x70%` (width=83 and height=70%)
