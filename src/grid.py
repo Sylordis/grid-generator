@@ -1,5 +1,6 @@
 from colour import Color
 from dataclasses import dataclass, field
+import logging
 
 
 from .shapes import Shape
@@ -89,6 +90,8 @@ class Grid:
     "Configuration of the grid."
     shapes_cfg: ShapesConfig | None = None
     "Default configuration of the shapes."
+    _log = logging.getLogger()
+    "Class logger"
 
     def __post_init__(self):
         if not self.cfg:
@@ -162,17 +165,21 @@ class Grid:
         :return: a number
         """
         all_percentiles = True
-        value = 1
+        had_values = False
+        value = 1.0
         if base:
             value *= str_to_number(base)
         orig = value
+        self._log.debug(f"csize: [{factors}] base={base} default={default}, value={value} orig={value}")
         for f in factors:
             if f:
+                had_values = True
                 value *= str_to_number(f)
+                self._log.debug(f"csizef: {f} => {value}")
                 if not is_percentile(f):
                     all_percentiles = False
                     break
-        if orig == value and default:
+        if not had_values and default:
             value = str_to_number(default)
             all_percentiles = is_percentile(default)
         if all_percentiles:
@@ -196,7 +203,9 @@ class Grid:
         if not default_width:
             default_width = self.shapes_cfg.base_cell_ratio
         width = self.calculate_size(shape.width, default=default_width)
+        self._log.debug(f"width: {width}, base={default_width}")
         if not default_height:
             default_height = self.shapes_cfg.base_cell_ratio
         height = self.calculate_size(shape.height, default=default_height)
+        self._log.debug(f"height: {height}, base={default_height}")
         return width, height
