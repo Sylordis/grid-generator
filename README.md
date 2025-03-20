@@ -39,7 +39,7 @@ python -m grid-generator -d grid-generator/dist grid-generator/test/data
 
 ## Input files
 
-Definition of the input file is described in [documentation files](doc/input_file_definition.md).
+Grammar of the input file is described in its own [documentation file](doc/input_file_definition.md).
 
 ## Development
 

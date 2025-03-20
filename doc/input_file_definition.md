@@ -28,7 +28,7 @@ shape_def = integer, shape | shape ;
 integer = ['0'-'9']+ ;
 ```
 
-Some samples of input files are available in the [test samples directory](tests/test_data/samples).
+Some samples of input files are available in the [test samples directory](../test/data/samples).
 
 ## Properties
 
