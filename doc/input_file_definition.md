@@ -62,7 +62,7 @@ Both `width` and `height` can be combined in one declaration with `Size x Size` 
 
 Directions, positions and angles are all managed in the same way, with a premade list of simple directions/positions.
 
-Angles are managed according to the mathematical [unit circle](https://en.wikipedia.org/wiki/Unit_circle) ([shortcut to picture](https://en.wikipedia.org/wiki/File:Unit_circle_angles_color.svg)) and the default orientation is towards the **top**.
+Angles are managed according to the mathematical [unit circle](https://en.wikipedia.org/wiki/Unit_circle) ([shortcut to picture](https://en.wikipedia.org/wiki/File:Unit_circle_angles_color.svg)) and the default orientation (0°) is towards the **top**.
 
 Orientations and positions both accept either the mnemonic or the shortcut.
 
@@ -83,10 +83,10 @@ In case you find the shortcuts confusing, diagonal directions/positions are dete
 In the following table, the `monospace` characters are the normal keyboard ones, *italics* are the "language native" ones:
 
 | | | |
-| --- | --- | --- |
-| `Q` | *T* | `E` |
-| *L* | `S` | *R* |
-| `Z` | *B* | `C` |
+| :---: | :---: | :---: |
+| `Q` | `W`, *T* | `E` |
+| `A`, *L* | `S`, *M* | `D`, *R* |
+| `Z` | `X`, *B* | `C` |
 
 ## Cells
 
@@ -94,11 +94,12 @@ In the following table, the `monospace` characters are the normal keyboard ones,
 
 Properties do not have to be provided in the order indicated by the table.
 
-| Property | Native? | Default | Description |
-| ---      | :---:   | :---:   | ---         |
-| `bg_color` | y | `None` | Background color of the cell. |
-| `layout` | y | `stack` | Layout of the shapes in the cell. |
-| `orientation` | y | `right` | Default orientation of the shapes in the cell (see ). |
+| Property | Native? | Default | Type | Description |
+| ---      | :---:   | :---:   | ---  | ---         |
+| `bg_color` | n | `None` | Color | Background color of the cell. |
+| `layout` | y | `stack` | [Cell layout](#cell-layouts) | Layout of the shapes in the cell. |
+| `orientation` | y | `right` | Angle | Default orientation of the shapes in the cell. |
+| `size` | n | `None` | Size | Default size of the shapes in the cell. |
 
 ### Cell layouts
 
@@ -123,7 +124,7 @@ Shapes can be used in the input file as the shortcut or the full name.
 
 | Shape | Shortcut | Comment |
 | ---   | :---:    | ---     |
-| Arrow | `A` | `width` = length, no height yet. |
+| Arrow | `A` | `width` = length, no height (yet). |
 | Circle | `C` | `width` = diameter, no height. |
 | Diamond | `D` | Uses default `width`(2). |
 | Ellipse | `E` | Uses default `width`(2). |

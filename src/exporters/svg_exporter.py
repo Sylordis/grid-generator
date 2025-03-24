@@ -137,6 +137,7 @@ class SVGExporter(Exporter):
             for col in range(len(grid.content[row])):
                 cell_pos = Coordinates(col, row)
                 self._log.debug(f"Generating cell {Vector(col,row)}")
+                self._log.debug(f"Cell: {grid.cell(cell_pos)}")
                 cell = grid.cell(cell_pos)
                 self._log.debug(
                     f"Content={[s.__class__.__name__ for s in cell.content]}"
@@ -205,7 +206,7 @@ class SVGExporter(Exporter):
     ) -> SVGElementCreation:
         svg_params = self._extract_standard_svg_params(shape, grid)
         # TODO Use height
-        length_full, *_ = grid.calculate_dimensions(shape)
+        length_full, *_ = grid.calculate_dimensions(shape, cell=grid.cell(cell_pos))
         arrow_end = Coordinates(
             0, -length_full / 2 + self.exporter_cfg.arrows.head_length
         )
@@ -258,10 +259,8 @@ class SVGExporter(Exporter):
         shape_id: str | None = None,
     ) -> SVGElementCreation:
         svg_params = self._extract_standard_svg_params(shape, grid)
-        radius = (
-            grid.calculate_size(shape.width, default=grid.shapes_cfg.base_cell_ratio)
-            / 2
-        )
+        width, _ = grid.calculate_dimensions(shape, cell=grid.cell(cell_pos))
+        radius = width / 2
         self._log.debug(f"Circle=(xy={shape_center}, r={radius}, params={svg_params})")
         return {}, [
             svg.Circle(
@@ -283,7 +282,7 @@ class SVGExporter(Exporter):
     ) -> SVGElementCreation:
         svg_params = self._extract_standard_svg_params(shape, grid)
         width, height = grid.calculate_dimensions(
-            shape, default_width=grid.shapes_cfg.base_cell_ratio_2
+            shape, cell=grid.cell(cell_pos), cell_alt=True, default_width=grid.shapes_cfg.base_cell_ratio_2
         )
         svg_params["transform"] = self._calculate_rotation_transform(
             self._get_angles(shape, grid, cell_pos), shape_center
@@ -311,7 +310,7 @@ class SVGExporter(Exporter):
     ) -> SVGElementCreation:
         svg_params = self._extract_standard_svg_params(shape, grid)
         width, height = grid.calculate_dimensions(
-            shape, default_width=grid.shapes_cfg.base_cell_ratio_2
+            shape, cell=grid.cell(cell_pos), default_width=grid.shapes_cfg.base_cell_ratio_2
         )
         rx, ry = width / 2, height / 2
         cx, cy, rx, ry = self.normalize_numbers(shape_center.x, shape_center.y, rx, ry)
@@ -329,9 +328,8 @@ class SVGExporter(Exporter):
         shape_id: str | None = None,
     ) -> SVGElementCreation:
         svg_params = self._extract_standard_svg_params(shape, grid)
-        radius = (
-            grid.calculate_size(shape.width, base=grid.shapes_cfg.base_cell_ratio) / 2
-        )
+        width, _ = grid.calculate_dimensions(shape, cell=grid.cell(cell_pos))
+        radius = width / 2
         original_point = Vector(radius, 0)
         points = [original_point + shape_center] + [
             shape_center + rotate(original_point, Angle(a)) for a in range(60, 360, 60)
@@ -363,7 +361,7 @@ class SVGExporter(Exporter):
                 else grid.shapes_cfg.base_cell_ratio_2
             ),
         }
-        width, height = grid.calculate_dimensions(shape, **defaults)
+        width, height = grid.calculate_dimensions(shape, cell=grid.cell(cell_pos), cell_alt=not shape._is_square, **defaults)
         x, y = shape_center.x - width / 2, shape_center.y - height / 2
         svg_params["transform"] = self._calculate_rotation_transform(
             self._get_angles(shape, grid, cell_pos), shape_center
@@ -395,7 +393,7 @@ class SVGExporter(Exporter):
     ) -> SVGElementCreation:
         svg_params = self._extract_standard_svg_params(shape, grid)
         width, height = grid.calculate_dimensions(
-            shape, default_height=grid.shapes_cfg.base_cell_ratio_2
+            shape, cell=grid.cell(cell_pos), cell_alt=True, default_height=grid.shapes_cfg.base_cell_ratio_2
         )
         radius_outer, radius_inner = width / 2, height / 2
         original_outer_point = Vector(0, -radius_outer)
@@ -431,7 +429,7 @@ class SVGExporter(Exporter):
         shape_id: str | None = None,
     ) -> SVGElementCreation:
         svg_params = self._extract_standard_svg_params(shape, grid)
-        width, height = grid.calculate_dimensions(shape)
+        width, height = grid.calculate_dimensions(shape, cell=grid.cell(cell_pos))
         x, y = shape_center.x - width / 2, shape_center.y - height / 2
         svg_params["transform"] = self._calculate_rotation_transform(
             self._get_angles(shape, grid, cell_pos), shape_center

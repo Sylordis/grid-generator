@@ -38,7 +38,9 @@ class CfgParser:
             except ValueError:
                 color = None
             if match:
-                cfg[match.group(1).replace("-", "_")] = match.group(3)
+                prop_name = match.group(1).replace("-", "_")
+                cfg[prop_name] = match.group(3)
+                self._log.debug(f"Direct cfg {prop_name}={match.group(3)}")
             elif Layout.is_layout(param):
                 cfg.update(self._parse_layout(param))
             elif self._position_factory.is_position(param):

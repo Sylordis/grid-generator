@@ -40,7 +40,7 @@ class Searchable:
         """
         Updates the fields of this object, re-dispatching the
 
-        :param updates:
+        :param updates: dictionary of properties to update (key => new value)
         """
         for k, v in updates.items():
             if "." in k:
@@ -48,5 +48,5 @@ class Searchable:
                 nkey = k[k.index(".") + 1 :]
                 logging.getLogger().debug(f"compound update: {k} => {nkey}: {v}")
                 self.__dict__[keys[0]].update({nkey: v})
-            else:
-                self.__dict__.update({k: v})
+            elif hasattr(self, k):
+                setattr(self, k, v)

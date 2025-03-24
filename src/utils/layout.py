@@ -55,7 +55,7 @@ class PositionFactory:
     def __init__(self):
         self._log = logging.getLogger()
         self._positions: list[Position] = [
-            Position(PositionShardVertical.BOTTOM, None, ["B"], Vector(0.5, 1), 180),
+            Position(PositionShardVertical.BOTTOM, None, ["B", "X"], Vector(0.5, 1), 180),
             Position(
                 PositionShardVertical.BOTTOM,
                 PositionShardHorizontal.LEFT,
@@ -70,10 +70,10 @@ class PositionFactory:
                 Vector(1, 1),
                 225,
             ),
-            Position(None, PositionShardHorizontal.LEFT, ["L"], Vector(0, 0.5), 90),
-            Position(None, PositionShardHorizontal.RIGHT, ["R"], Vector(1, 0.5), 270),
-            Position(PositionShardVertical.TOP, None, ["T"], Vector(0.5, 0), 0),
-            Position(None, None, ["S"], Vector(0.5, 0.5)),
+            Position(None, PositionShardHorizontal.LEFT, ["L", "A"], Vector(0, 0.5), 90),
+            Position(None, PositionShardHorizontal.RIGHT, ["R", "F"], Vector(1, 0.5), 270),
+            Position(PositionShardVertical.TOP, None, ["T", "W"], Vector(0.5, 0), 0),
+            Position(None, None, ["S", "M"], Vector(0.5, 0.5)),
             Position(
                 PositionShardVertical.TOP,
                 PositionShardHorizontal.LEFT,
@@ -179,7 +179,9 @@ class Layout(Searchable):
     By definition the first one is considered as the "start" point, the last one is the "end" point.
     """
     height: Size = Size("100%")
+    "Set in terms of margin."
     width: Size = Size("100%")
+    "Set in terms of margin."
 
     @property
     def start(self):

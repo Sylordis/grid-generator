@@ -14,18 +14,21 @@ The rest of the dependencies can be seen in the [requirements.txt file](requirem
 
 In the root directory of this repo:
 
-1. Setup a virtual environment `python -m venv .venv`
-2. Install the requirements `pip install -r requirements.txt`
+1. Setup a virtual environment `python -m venv .venv`.
+1. Activate the virtual environment `source .venv/bin/activate` (linux) or `source .venv/Scripts/activate` (windows).
+1. Install the requirements `pip install -r requirements.txt`.
 
 ## Usage
 
-From outside this repo, in the virtual environment:
+From outside this repo, with the virtual environment activated:
 
 ```bash
 python -m grid-generator [options] <input_files..>
 ```
 
-SVG files will be created in the directory of the input files, or in the directory specified by `--dist`/`-d`.
+SVG files will be created in the directory of the input files or in the directory specified by `--dist`/`-d`.
+
+*Warning:* the dist directory as to be created before-hand.
 
 You can also run `python -m grid-generator --help` for help.
 
@@ -34,7 +37,7 @@ You can also run `python -m grid-generator --help` for help.
 From outside this repo, inside the virtual environment:
 
 ```bash
-python -m grid-generator -d grid-generator/dist grid-generator/test/data/*.txt
+python -m grid-generator -d grid-generator/dist grid-generator/test/data/samples/*.txt
 ```
 
 ## Input files

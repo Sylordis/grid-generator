@@ -24,7 +24,25 @@ class Cell(Searchable):
     layout: Layout | None = None
     "Layout of the cell."
     orientation: Angle | None = None
-    "Global orientation of the content of the cell."
+    "Default orientation of the content of the cell."
+    _size: Size | None = None
+    """
+    Default size of the content of the cell.
+    Shortcut: `s`
+    """
+    size_alt: Size | None = None
+    """
+    Second default size of the content of the cell.
+    Shortcut: `s_alt`
+    """
+
+    @property
+    def size(self):
+        return self._size
+
+    @size.setter
+    def size(self, value):
+        self._size = Size(value)
 
     def __post_init__(self):
         if not self.layout:
@@ -191,6 +209,8 @@ class Grid:
     def calculate_dimensions(
         self,
         shape: Shape,
+        cell: Cell = None,
+        cell_alt: bool = False,
         default_width: Size = None,
         default_height: Size = None,
     ) -> tuple[float, float]:
@@ -198,16 +218,31 @@ class Grid:
         Calculate both width and height based on shape's configuration and current grid's default configuration.
 
         :param shape: shape to calculate the dimensions of
+        :param cell: cell to check for default size
+        :param cell_alt: check for alternative size of the cell (for height)
         :param default_width: default width to use
         :param default_height: default height to use
         :return: a tuple with calculated (width,height)
         """
+        # Width
+        widths = [shape.width]
+        if cell:
+            widths.append(cell.size)
         if not default_width:
             default_width = self.shapes_cfg.base_cell_ratio
-        width = self.calculate_size(shape.width, default=default_width)
-        self._log.debug(f"width: {width}, default={default_width}")
+        width = self.calculate_size(*widths, default=default_width)
+        self._log.debug(f"width: {widths}, default={default_width}")
+
+        # Height
+        heights = [shape.height]
+        if cell:
+            if cell_alt:
+                heights.append(cell.size_alt)
+            else:
+                heights.append(cell.size)
         if not default_height:
             default_height = self.shapes_cfg.base_cell_ratio
-        height = self.calculate_size(shape.height, default=default_height)
-        self._log.debug(f"height: {height}, default={default_height}")
+        height = self.calculate_size(*heights, default=default_height)
+        self._log.debug(f"height: {heights}, default={default_height}")
+
         return width, height
