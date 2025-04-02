@@ -52,7 +52,7 @@ class Size:
     @property
     def value(self) -> float:
         "Gets the floating value of this size."
-        return self._unit.value_supplier(self._value) if self._unit else self._value
+        return self._unit.value_supplier(self._value) if self._unit and self._unit.value_supplier else self._value
 
     @property
     def unit(self) -> SizeUnit:

@@ -1,9 +1,6 @@
 from typing import Callable, Any, TypeAlias
 
 
-Size: TypeAlias = float | int | str
-
-
 def is_percentile(value) -> bool:
     """
     Takes a value and check if it's a percentile number.

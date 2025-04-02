@@ -1,7 +1,7 @@
 from abc import ABC
 from colour import Color
 from dataclasses import dataclass
-from typing import Any
+from enum import StrEnum
 
 
 from .utils.geometry import Angle
@@ -20,9 +20,18 @@ class Shape(ABC):
     width: Size | None = None
 
 
+class ArrowHeadShape(StrEnum):
+    DIAMOND = "diamond"
+    INDENT = "indent"
+    TRIANGLE = "triangle"
+
+
 @dataclass
 class Arrow(Shape):
-    head: Size | None = Size("150%")
+    head_size: Size | None = Size("200%")
+    stroke_width: Size | None = None # Aesthetics: 1/8 of cell size
+    style: ArrowHeadShape | None = ArrowHeadShape.TRIANGLE
+    # TODO Choose arrow head position: start, end, start+end
 
 
 @dataclass

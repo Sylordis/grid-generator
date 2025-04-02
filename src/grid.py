@@ -67,8 +67,6 @@ class GridConfig(Searchable):
     "Whether the grid is displayed on top of the components (True, default) or under (False)."
 
     def __post_init__(self):
-        if not self.bg_color:
-            self.bg_color = Color("#FFFFFF")
         if not self.border_color:
             self.border_color = Color("#000000")
 

@@ -9,6 +9,7 @@ from ..grid import Grid
 from ..shapes import (
     Shape,
     Arrow,
+    ArrowHeadShape,
     Circle,
     Diamond,
     Ellipse,
@@ -17,8 +18,9 @@ from ..shapes import (
     Star,
     Triangle,
 )
-from ..utils.converters import apply_all, str_to_number, Converters, Size
+from ..utils.converters import apply_all, str_to_number, Converters
 from ..utils.geometry import rotate, Angle, Coordinates, Vector
+from ..utils.units import Size
 from ..layout_generator import LayoutGenerator
 
 
@@ -30,22 +32,9 @@ and a list for created SVG normal elements.
 
 
 @dataclass
-class SVGArrowCfg:
-    "Basic configuration for SVG Arrow (Path + head) elements."
-
-    head_length: float = 4
-    "Head length."
-
-
-@dataclass
 class SVGExporterCfg:
     "Configuration for the exporter itself."
-
-    arrows: SVGArrowCfg | None = None
-    "Arrows configuration."
-
-    def __post_init__(self):
-        self.arrows = SVGArrowCfg()
+    pass
 
 
 class SVGExporter(Exporter):
@@ -207,9 +196,15 @@ class SVGExporter(Exporter):
         svg_params = self._extract_standard_svg_params(shape, grid)
         # TODO Use height
         length_full, *_ = grid.calculate_dimensions(shape, cell=grid.cell(cell_pos))
-        arrow_end = Coordinates(
-            0, -length_full / 2 + self.exporter_cfg.arrows.head_length
+        self._log.debug(f"{shape}")
+        stroke_width = Size(grid.cfg.cell_size / 8)  # Judged aesthetically pleasing
+        head_size = (
+            stroke_width.value * shape.head_size.value
+            if shape.head_size and shape.head_size.is_relative()
+            else shape.head_size.value
         )
+        self._log.debug(f"Arrow: stroke_width={stroke_width}, head_size={head_size}, shape.head_size={shape.head_size.value}")
+        arrow_end = Coordinates(0, -length_full / 2 + head_size)
         arrow_start = Coordinates(0, length_full / 2)
         # Normalise all values
         arrow_start, arrow_end = tuple(
@@ -224,31 +219,61 @@ class SVGExporter(Exporter):
             f"Arrow: base {arrow_start}=>{arrow_end}, length_full={length_full}, distance={arrow_start.distance(arrow_end)}, params={svg_params}"
         )
         # Create SVG definition for head
-        head_path = svg.Path(fill=svg_params["fill"], d="M0,0 V4 L2,2 Z")
-        head_def_id = f"arrow-head-{self.normalize_id(svg_params["fill"])}-{self.normalize_id(length_full)}"
-        marker = svg.Marker(
-            id=head_def_id,
-            orient="auto",
-            markerWidth=self.exporter_cfg.arrows.head_length,
-            markerHeight="4",
-            refX="0.1",
-            refY="2",
-            elements=[head_path],
+        head_def_id = f"arrow-head-{self.normalize_id(svg_params["fill"])}-{self.normalize_id(length_full)}-{shape.style}"
+        marker = self.create_arrow_head(
+            shape, head_def_id, {"fill": svg_params["fill"]}
         )
         defs = {head_def_id: marker}
         # Create SVG element for the arrow
-        shape_id = "" if shape_id is None else shape_id
         elts = [
             svg.Path(
                 id=shape_id,
                 marker_end=f"url(#{head_def_id})",
-                stroke_width="2",  # TODO Make it according to width
+                stroke_width=stroke_width,  # TODO Make it according to width/height
                 stroke=svg_params["fill"],
                 d=f"M {arrow_start[0]},{arrow_start[1]} {arrow_end[0]},{arrow_end[1]}",
                 **svg_params,
             )
         ]
         return defs, elts
+
+    def create_arrow_head(
+        self, shape: Arrow, id: str, cfg_head: dict = {}, cfg_marker: dict = {}
+    ):
+        refX = 1  # To change to move the head along the path, + is lower
+        refY = 1.5
+        points = []
+        if shape.style == ArrowHeadShape.DIAMOND:
+            points = [
+                Coordinates(1, 3),
+                Coordinates(0, 1.5),
+                Coordinates(1, 0),
+                Coordinates(3, 1.5),
+            ]
+        elif shape.style == ArrowHeadShape.INDENT:
+            points = [
+                Coordinates(0, 3),
+                Coordinates(1, 1.5),
+                Coordinates(0, 0),
+                Coordinates(3, 1.5),
+            ]
+        elif shape.style == ArrowHeadShape.TRIANGLE:
+            points = [Coordinates(0.5, 3), Coordinates(0.5, 0), Coordinates(3, 1.5)]
+        marker = svg.Marker(
+            id=id,
+            orient="auto",
+            markerWidth="3",
+            markerHeight="3",
+            refX=refX,
+            refY=refY,
+            elements=[
+                svg.Polygon(
+                    points=" ".join([f"{p.x},{p.y}" for p in points]), **cfg_head
+                )
+            ],
+            **cfg_marker,
+        )
+        return marker
 
     def create_circle(
         self,
@@ -282,7 +307,10 @@ class SVGExporter(Exporter):
     ) -> SVGElementCreation:
         svg_params = self._extract_standard_svg_params(shape, grid)
         width, height = grid.calculate_dimensions(
-            shape, cell=grid.cell(cell_pos), cell_alt=True, default_width=grid.shapes_cfg.base_cell_ratio_2
+            shape,
+            cell=grid.cell(cell_pos),
+            cell_alt=True,
+            default_width=grid.shapes_cfg.base_cell_ratio_2,
         )
         svg_params["transform"] = self._calculate_rotation_transform(
             self._get_angles(shape, grid, cell_pos), shape_center
@@ -310,7 +338,9 @@ class SVGExporter(Exporter):
     ) -> SVGElementCreation:
         svg_params = self._extract_standard_svg_params(shape, grid)
         width, height = grid.calculate_dimensions(
-            shape, cell=grid.cell(cell_pos), default_width=grid.shapes_cfg.base_cell_ratio_2
+            shape,
+            cell=grid.cell(cell_pos),
+            default_width=grid.shapes_cfg.base_cell_ratio_2,
         )
         rx, ry = width / 2, height / 2
         cx, cy, rx, ry = self.normalize_numbers(shape_center.x, shape_center.y, rx, ry)
@@ -361,7 +391,9 @@ class SVGExporter(Exporter):
                 else grid.shapes_cfg.base_cell_ratio_2
             ),
         }
-        width, height = grid.calculate_dimensions(shape, cell=grid.cell(cell_pos), cell_alt=not shape._is_square, **defaults)
+        width, height = grid.calculate_dimensions(
+            shape, cell=grid.cell(cell_pos), cell_alt=not shape._is_square, **defaults
+        )
         x, y = shape_center.x - width / 2, shape_center.y - height / 2
         svg_params["transform"] = self._calculate_rotation_transform(
             self._get_angles(shape, grid, cell_pos), shape_center
@@ -393,7 +425,10 @@ class SVGExporter(Exporter):
     ) -> SVGElementCreation:
         svg_params = self._extract_standard_svg_params(shape, grid)
         width, height = grid.calculate_dimensions(
-            shape, cell=grid.cell(cell_pos), cell_alt=True, default_height=grid.shapes_cfg.base_cell_ratio_2
+            shape,
+            cell=grid.cell(cell_pos),
+            cell_alt=True,
+            default_height=grid.shapes_cfg.base_cell_ratio_2,
         )
         radius_outer, radius_inner = width / 2, height / 2
         original_outer_point = Vector(0, -radius_outer)

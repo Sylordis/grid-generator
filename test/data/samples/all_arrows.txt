@@ -1,3 +1,3 @@
-{Q}A|{horizontal}2A{T}|2A{E}|A{Z}
+{Q}A|{horizontal}2A{T}|2A{E;style=diamond}|A{Z;style=indent}
 {L;horizontal}2A|A{Q};A{T};A{E};A{L};A{R};A{Z};A{B};A{C}|A{R}|{R;vertical;size=50%}A{green}A{L;green}
-A{Z}|A{B;100%}|A{C;orange}|A{L}
+A{Z;style=indent}|A{B;100%}|A{C;orange}|A{L}
