@@ -1,24 +1,39 @@
-import logging
-from typing import Callable
+"Module for layout generation, i.e. the way to place objects in a grid and/or cell."
 
-from .grid import Cell, Grid
+import logging
+
+from .grid import Grid
 from .utils.layout import LayoutType, PositionFactory
 from .utils.geometry import Coordinates
 
 
 class BasicLayoutGenerators:
+    """
+    Generator for simple layouts.
+    """
 
     @staticmethod
     def stacked(grid: Grid, cell_pos: Coordinates):
+        """
+        Generates the positions for objects in a stacked layout, i.e. all objects stacked in the middle.
+
+        :param grid: the grid where to generated the layout for
+        :param cell_pos: the position of the cell to generate the layout for
+        """
         while True:
             yield grid.calculate_cell_center(cell_pos)
 
 
 class LayoutGenerator:
+    """
+    Generates layouts.
+    """
 
     def __init__(self):
         self._log = logging.getLogger()
+        "Class logger."
         self._position_factory = PositionFactory()
+        "Factory for creating positions."
 
     def generate(self, grid: Grid, cell_pos: Coordinates):
         """
@@ -82,5 +97,5 @@ class LayoutGenerator:
         :return: a generator of positions
         """
         item_vector = (end - start) / (n + 1)
-        for n in range(n):
-            yield start + item_vector * (n + 1)
+        for i in range(n):
+            yield start + item_vector * (i + 1)

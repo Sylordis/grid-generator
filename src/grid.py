@@ -1,10 +1,11 @@
-from colour import Color
+"Module to represent grids in an abstract format."
+
 from dataclasses import dataclass, field
 import logging
 
+from colour import Color
 
 from .shapes import Shape
-from .utils.converters import is_percentile, str_to_number
 from .utils.geometry import Angle, Coordinates, Vector
 from .utils.layout import Layout, Position
 from .utils.searchable import Searchable
@@ -38,10 +39,12 @@ class Cell(Searchable):
 
     @property
     def size(self):
+        "Gets the default cell's content size."
         return self._size
 
     @size.setter
     def size(self, value):
+        "Sets the default cell's content size."
         self._size = Size(value)
 
     def __post_init__(self):

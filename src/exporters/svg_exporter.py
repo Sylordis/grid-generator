@@ -1,8 +1,9 @@
 from dataclasses import dataclass
 from pathlib import Path
 import re
-import svg
 from typing import TypeAlias
+
+import svg
 
 from .exporter import Exporter
 from ..grid import Grid
@@ -18,7 +19,7 @@ from ..shapes import (
     Star,
     Triangle,
 )
-from ..utils.converters import apply_all, str_to_number, Converters
+from ..utils.converters import apply_all, Converters
 from ..utils.geometry import rotate, Angle, Coordinates, Vector
 from ..utils.units import Size
 from ..layout_generator import LayoutGenerator
@@ -54,7 +55,7 @@ class SVGExporter(Exporter):
         height_img = heightn * grid.cfg.cell_size + grid.cfg.border_width
         width_img = widthn * grid.cfg.cell_size + grid.cfg.border_width
         self._log.info(
-            f"Grid size: {widthn}x{heightn} => Image size: {width_img}x{height_img} px"
+            f"Grid size: {widthn}x{heightn} (Image: {width_img}x{height_img} px)"
         )
         def_elements: dict[str, list[svg.Element]] = {}
         elements: list[svg.Element] = []
@@ -76,7 +77,7 @@ class SVGExporter(Exporter):
         elements.insert(0, svg.Defs(elements=[v for k, v in def_elements.items()]))
         canvas = svg.SVG(width=width_img, height=height_img, elements=elements)
         self._log.debug("Creating resulting file")
-        with open(output_file, "w") as write_file:
+        with open(output_file, "w", encoding="utf-8") as write_file:
             write_file.write(str(canvas))
 
     def create_svg_grid(self, grid: Grid) -> SVGElementCreation:
@@ -122,8 +123,8 @@ class SVGExporter(Exporter):
         def_elements: dict[str, list[svg.Element]] = {}
         elements: list[svg.Element] = []
         layout_manager = LayoutGenerator()
-        for row in range(len(grid.content)):
-            for col in range(len(grid.content[row])):
+        for row, _ in enumerate(grid.content):
+            for col, _ in enumerate(grid.content[row]):
                 cell_pos = Coordinates(col, row)
                 self._log.debug(f"Generating cell {Vector(col,row)}")
                 self._log.debug(f"Cell: {grid.cell(cell_pos)}")
@@ -193,6 +194,7 @@ class SVGExporter(Exporter):
         shape_center: Coordinates | None = None,
         shape_id: str | None = None,
     ) -> SVGElementCreation:
+        "Creates an SVG arrow shape."
         svg_params = self._extract_standard_svg_params(shape, grid)
         # TODO Use height
         length_full, *_ = grid.calculate_dimensions(shape, cell=grid.cell(cell_pos))
@@ -238,10 +240,15 @@ class SVGExporter(Exporter):
         return defs, elts
 
     def create_arrow_head(
-        self, shape: Arrow, id: str, cfg_head: dict = {}, cfg_marker: dict = {}
+        self, shape: Arrow, head_id: str, cfg_head: dict = None, cfg_marker: dict = None
     ):
-        refX = 1  # To change to move the head along the path, + is lower
-        refY = 1.5
+        "Creates the head of an SVG arrow shape."
+        if cfg_head is None:
+            cfg_head = {}
+        if cfg_marker is None:
+            cfg_marker = {}
+        ref_x = 1  # To change to move the head along the path, + is lower
+        ref_y = 1.5
         points = []
         if shape.style == ArrowHeadShape.DIAMOND:
             points = [
@@ -260,12 +267,12 @@ class SVGExporter(Exporter):
         elif shape.style == ArrowHeadShape.TRIANGLE:
             points = [Coordinates(0.5, 3), Coordinates(0.5, 0), Coordinates(3, 1.5)]
         marker = svg.Marker(
-            id=id,
+            id=head_id,
             orient="auto",
             markerWidth="3",
             markerHeight="3",
-            refX=refX,
-            refY=refY,
+            refX=ref_x,
+            refY=ref_y,
             elements=[
                 svg.Polygon(
                     points=" ".join([f"{p.x},{p.y}" for p in points]), **cfg_head
@@ -283,6 +290,7 @@ class SVGExporter(Exporter):
         shape_center: Coordinates | None = None,
         shape_id: str | None = None,
     ) -> SVGElementCreation:
+        "Creates an SVG circle shape."
         svg_params = self._extract_standard_svg_params(shape, grid)
         width, _ = grid.calculate_dimensions(shape, cell=grid.cell(cell_pos))
         radius = width / 2
@@ -305,6 +313,7 @@ class SVGExporter(Exporter):
         shape_center: Coordinates | None = None,
         shape_id: str | None = None,
     ) -> SVGElementCreation:
+        "Creates an SVG diamond shape."
         svg_params = self._extract_standard_svg_params(shape, grid)
         width, height = grid.calculate_dimensions(
             shape,
@@ -336,6 +345,7 @@ class SVGExporter(Exporter):
         shape_center: Coordinates | None = None,
         shape_id: str | None = None,
     ) -> SVGElementCreation:
+        "Creates an SVG ellipse shape."
         svg_params = self._extract_standard_svg_params(shape, grid)
         width, height = grid.calculate_dimensions(
             shape,
@@ -357,6 +367,7 @@ class SVGExporter(Exporter):
         shape_center: Coordinates | None = None,
         shape_id: str | None = None,
     ) -> SVGElementCreation:
+        "Creates an SVG hexagon shape."
         svg_params = self._extract_standard_svg_params(shape, grid)
         width, _ = grid.calculate_dimensions(shape, cell=grid.cell(cell_pos))
         radius = width / 2
@@ -382,6 +393,7 @@ class SVGExporter(Exporter):
         shape_center: Coordinates | None = None,
         shape_id: str | None = None,
     ) -> SVGElementCreation:
+        "Creates an SVG rectangle shape."
         svg_params = self._extract_standard_svg_params(shape, grid)
         defaults = {
             "default_width": grid.shapes_cfg.base_cell_ratio,
@@ -423,6 +435,7 @@ class SVGExporter(Exporter):
         shape_center: Coordinates | None = None,
         shape_id: str | None = None,
     ) -> SVGElementCreation:
+        "Creates an SVG star shape."
         svg_params = self._extract_standard_svg_params(shape, grid)
         width, height = grid.calculate_dimensions(
             shape,
@@ -463,6 +476,7 @@ class SVGExporter(Exporter):
         shape_center: Coordinates | None = None,
         shape_id: str | None = None,
     ) -> SVGElementCreation:
+        "Creates an SVG triangle shape."
         svg_params = self._extract_standard_svg_params(shape, grid)
         width, height = grid.calculate_dimensions(shape, cell=grid.cell(cell_pos))
         x, y = shape_center.x - width / 2, shape_center.y - height / 2
@@ -519,8 +533,20 @@ class SVGExporter(Exporter):
         return desired_angle, current_angle
 
     def normalize_id(self, s: str):
+        """
+        Normalises a shape id by changing anything non alphadecimal into a dash.
+
+        :param s: a string to normalise
+        :return: the string normalised
+        """
         o = str(s)
         return re.sub("[^a-zA-Z0-9]", "-", o)
 
     def normalize_numbers(self, *args):
+        """
+        Normalises all provided argument numbers to a 2-decimal float number.
+
+        :param args: all numbers to normalise
+        :return: numbers normalised
+        """
         return apply_all(Converters.to_float(2), *args)

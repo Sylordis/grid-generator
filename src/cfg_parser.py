@@ -1,8 +1,10 @@
-from colour import Color
+"Module to parse configuration files."
+
 import logging
 import re
 from typing import Any
 
+from colour import Color
 
 from .utils.geometry import Angle
 from .utils.layout import Layout, PositionFactory

@@ -16,7 +16,8 @@ class ArgParser:
 
     def __init__(self):
         self.parser = argparse.ArgumentParser(
-            prog=__name__, description="Runs a python coding puzzle."
+            prog="python -m grid-generator",
+            description="Runs the python grid generator tool over multiple source files."
         )
         self.parser.add_argument("input_file", help="Input file.", nargs="+")
         self.parser.add_argument(
@@ -30,14 +31,14 @@ class ArgParser:
         self.parser.add_argument(
             "-c",
             "--config",
-            metavar="FILE",
+            metavar="CFG_FILE",
             help="Configuration file for default values.",
         )
         self.parser.add_argument(
             "-d",
-            "--dist",
+            "--dest",
             help="Destination directory where to generate the images.",
-            metavar="PATH",
+            metavar="DEST_PATH",
         )
         self.parser.add_argument(
             "--no-export",

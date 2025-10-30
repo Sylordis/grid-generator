@@ -1,3 +1,5 @@
+"Main module of the grid-generator for drawing grids."
+
 from dataclasses import dataclass
 import logging
 from pathlib import Path
@@ -23,6 +25,9 @@ from .utils.symbols import GridSymbol, ShapeSymbol
 
 @dataclass
 class DrawToolConfig:
+    """
+    Configuration for the tool.
+    """
     dest_dir: Path | None = None
     "Destination directory for created images."
     do_export: bool = True
@@ -57,8 +62,8 @@ class GridDrawingTool:
         """
         Sets the configuration.
         """
-        if cfg.dist:
-            self.cfg.dist_dir = Path(cfg.dist)
+        if cfg.dest:
+            self.cfg.dest_dir = Path(cfg.dest)
         # "do_export" is a boolean
         if "do_export" in cfg:
             self.cfg.do_export = cfg.do_export
@@ -79,15 +84,15 @@ class GridDrawingTool:
                 self._log.warning(f"File '{src_file}' does not exist. Skipping.")
             else:
                 dist_file = (
-                    self.cfg.dist_dir
-                    if self.cfg.dist_dir is not None
+                    self.cfg.dest_dir
+                    if self.cfg.dest_dir is not None
                     else src_file.parent
                 )
                 dist_file = dist_file / f"{src_file.name}"
                 dist_file = dist_file.with_suffix(".svg")
                 files.append((src_file, dist_file))
-        if self.cfg.dist_dir:
-            self._log.info(f"Output dir: {self.cfg.dist_dir}")
+        if self.cfg.dest_dir:
+            self._log.info(f"Output dir: {self.cfg.dest_dir}")
         # Draw
         for input, output in files:
             grid_config = GridConfig() if cfg is None else cfg
@@ -167,7 +172,7 @@ class GridDrawingTool:
             # Matching shapes
             self._log.debug(f"Matching shapes: {cell_text_processed}")
             pattern = (
-                r"((\d*)([A-Z][a-z]*)("
+                r"((\d*)(\"?[A-Z][a-z]*)("
                 + re.escape(GridSymbol.CFG_START)
                 + "([^"
                 + GridSymbol.CFG_END
