@@ -1,3 +1,5 @@
+"""Exporter for SVG format."""
+
 from dataclasses import dataclass
 from pathlib import Path
 import re
@@ -17,6 +19,7 @@ from ..shapes import (
     Hexagon,
     Rectangle,
     Star,
+    Text,
     Triangle,
 )
 from ..utils.converters import apply_all, Converters
@@ -49,13 +52,13 @@ class SVGExporter(Exporter):
         self._log.debug(self.exporter_cfg)
 
     def export(self, grid: Grid, output_file: Path):
-        self._log.debug(f"Creating grid image to {output_file}")
+        self._log.debug("Creating grid image to %s", output_file)
         heightn = len(grid.content)
         widthn = max(len(x) for x in grid.content)
         height_img = heightn * grid.cfg.cell_size + grid.cfg.border_width
         width_img = widthn * grid.cfg.cell_size + grid.cfg.border_width
         self._log.info(
-            f"Grid size: {widthn}x{heightn} (Image: {width_img}x{height_img} px)"
+            "Grid size: %dx%d (Image: %dx%d px)", widthn, heightn, width_img, height_img
         )
         def_elements: dict[str, list[svg.Element]] = {}
         elements: list[svg.Element] = []
@@ -73,7 +76,7 @@ class SVGExporter(Exporter):
             elements.extend(els)
         else:
             elements = els + elements
-        self._log.debug(f"Definitions: {def_elements.keys()}")
+        self._log.debug("Definitions: %s", def_elements.keys())
         elements.insert(0, svg.Defs(elements=[v for k, v in def_elements.items()]))
         canvas = svg.SVG(width=width_img, height=height_img, elements=elements)
         self._log.debug("Creating resulting file")
@@ -126,11 +129,11 @@ class SVGExporter(Exporter):
         for row, _ in enumerate(grid.content):
             for col, _ in enumerate(grid.content[row]):
                 cell_pos = Coordinates(col, row)
-                self._log.debug(f"Generating cell {Vector(col,row)}")
-                self._log.debug(f"Cell: {grid.cell(cell_pos)}")
+                self._log.debug("Generating cell %s", Vector(col,row))
+                self._log.debug("Cell: %s", grid.cell(cell_pos))
                 cell = grid.cell(cell_pos)
                 self._log.debug(
-                    f"Content={[s.__class__.__name__ for s in cell.content]}"
+                    "Content=%s", [s.__class__.__name__ for s in cell.content]
                 )
                 layout_pos = layout_manager.generate(grid, cell_pos)
                 # Create shapes
@@ -168,9 +171,15 @@ class SVGExporter(Exporter):
         """
         definitions: dict[str, list[svg.Element]] = {}
         elements: list[svg.Element] = []
-        shape_id = f"{shape.__class__.__name__.lower()}-{cell_position[0]+1}-{cell_position[1]+1}-{shape_index}"
+        shape_id_parts = [
+            shape.__class__.__name__.lower(),
+            cell_position[0]+1,
+            cell_position[1]+1,
+            shape_index,
+        ]
+        shape_id = "-".join([str(p) for p in shape_id_parts])
         attr_name = f"create_{shape.__class__.__name__.lower()}"
-        self._log.debug(f"pos={cell_position}, {attr_name}: {shape}")
+        self._log.debug("pos=%s, %s: %s", cell_position, attr_name, shape)
         if hasattr(self, attr_name):
             creator = getattr(self, attr_name)
             definitions, elements = creator(
@@ -181,9 +190,9 @@ class SVGExporter(Exporter):
                 shape_id=shape_id,
             )
         else:
-            self._log.error(f"No idea how to export shape '{shape.__class__.__name__}'")
+            self._log.error("No idea how to export shape '%s'", shape.__class__.__name__)
         if len(elements) > 0:
-            self._log.debug(f"Shape {shape_id} created")
+            self._log.debug("Shape %s created", shape_id)
         return definitions, elements
 
     def create_arrow(
@@ -198,14 +207,14 @@ class SVGExporter(Exporter):
         svg_params = self._extract_standard_svg_params(shape, grid)
         # TODO Use height
         length_full, *_ = grid.calculate_dimensions(shape, cell=grid.cell(cell_pos))
-        self._log.debug(f"{shape}")
+        self._log.debug("%s", shape)
         stroke_width = Size(grid.cfg.cell_size / 8)  # Judged aesthetically pleasing
         head_size = (
             stroke_width.value * shape.head_size.value
             if shape.head_size and shape.head_size.is_relative()
             else shape.head_size.value
         )
-        self._log.debug(f"Arrow: stroke_width={stroke_width}, head_size={head_size}, shape.head_size={shape.head_size.value}")
+        self._log.debug("Arrow: stroke_width=%s, head_size=%s, shape.head_size=%s", stroke_width, head_size, shape.head_size.value)
         arrow_end = Coordinates(0, -length_full / 2 + head_size)
         arrow_start = Coordinates(0, length_full / 2)
         # Normalise all values
@@ -218,7 +227,7 @@ class SVGExporter(Exporter):
             self._get_angles(shape, grid, cell_pos), shape_center
         )
         self._log.debug(
-            f"Arrow: base {arrow_start}=>{arrow_end}, length_full={length_full}, distance={arrow_start.distance(arrow_end)}, params={svg_params}"
+            "Arrow: base %d=>%d, length_full=%d, distance=%d, params=%s", arrow_start, arrow_end, length_full, arrow_start.distance(arrow_end), svg_params
         )
         # Create SVG definition for head
         head_def_id = f"arrow-head-{self.normalize_id(svg_params["fill"])}-{self.normalize_id(length_full)}-{shape.style}"
@@ -294,7 +303,7 @@ class SVGExporter(Exporter):
         svg_params = self._extract_standard_svg_params(shape, grid)
         width, _ = grid.calculate_dimensions(shape, cell=grid.cell(cell_pos))
         radius = width / 2
-        self._log.debug(f"Circle=(xy={shape_center}, r={radius}, params={svg_params})")
+        self._log.debug("Circle=(xy=%s, r=%d, params=%s)", shape_center, radius, svg_params)
         return {}, [
             svg.Circle(
                 id=shape_id,
@@ -332,9 +341,9 @@ class SVGExporter(Exporter):
         ]
         discreet_points = self._discreetise(points)
         self._log.debug(
-            f"Polygon=(xy={shape_center}, points={points}, params={svg_params})"
+            "Polygon=(xy=%s, points=%s, params=%s)", shape_center, points, svg_params
         )
-        self._log.debug(f"Points flatmap = {discreet_points}")
+        self._log.debug("Points flatmap = %s", discreet_points)
         return {}, [svg.Polygon(id=shape_id, points=discreet_points, **svg_params)]
 
     def create_ellipse(
@@ -355,7 +364,7 @@ class SVGExporter(Exporter):
         rx, ry = width / 2, height / 2
         cx, cy, rx, ry = self.normalize_numbers(shape_center.x, shape_center.y, rx, ry)
         self._log.debug(
-            f"Ellipse=(xy={shape_center}, rx,ry={width},{height}, params={svg_params})"
+            "Ellipse=(xy=%s, rx,ry=%d,%d, params=%s)", shape_center, width, height, svg_params
         )
         return {}, [svg.Ellipse(id=shape_id, cx=cx, cy=cy, rx=rx, ry=ry, **svg_params)]
 
@@ -380,9 +389,9 @@ class SVGExporter(Exporter):
             self._get_angles(shape, grid, cell_pos), shape_center
         )
         self._log.debug(
-            f"Hexagon=(cxy={shape_center}, r={radius}, points={points} params={svg_params})"
+            "Hexagon=(cxy=%s, r=%d, points=%s params=%s)", shape_center, radius, points, svg_params
         )
-        self._log.debug(f"Points flatmap = {discreet_points}")
+        self._log.debug("Points flatmap = %s", discreet_points)
         return {}, [svg.Polygon(id=shape_id, points=discreet_points, **svg_params)]
 
     def create_rectangle(
@@ -399,12 +408,12 @@ class SVGExporter(Exporter):
             "default_width": grid.shapes_cfg.base_cell_ratio,
             "default_height": (
                 grid.shapes_cfg.base_cell_ratio
-                if shape._is_square
+                if shape.is_square
                 else grid.shapes_cfg.base_cell_ratio_2
             ),
         }
         width, height = grid.calculate_dimensions(
-            shape, cell=grid.cell(cell_pos), cell_alt=not shape._is_square, **defaults
+            shape, cell=grid.cell(cell_pos), cell_alt=not shape.is_square, **defaults
         )
         x, y = shape_center.x - width / 2, shape_center.y - height / 2
         svg_params["transform"] = self._calculate_rotation_transform(
@@ -413,7 +422,7 @@ class SVGExporter(Exporter):
         # Normalise all values
         x, y, height, width = self.normalize_numbers(x, y, height, width)
         self._log.debug(
-            f"Rectangle=(xy={(x,y)}, height={height}, width={width}, params={svg_params})"
+            "Rectangle=(xy=%s, height=%d, width=%d, params=%s)", (x,y), height, width, svg_params
         )
         return {}, [
             svg.Rect(
@@ -453,7 +462,7 @@ class SVGExporter(Exporter):
         while angle < 360:
             to_rotate = original_inner_point if is_inner else original_outer_point
             self._log.debug(
-                f"Starring: inner? {is_inner} point={to_rotate} angle={angle}"
+                "Starring: inner? %s point=%s angle=%d", is_inner, to_rotate, angle
             )
             points.append(shape_center + rotate(to_rotate, Angle(angle)))
             is_inner = not is_inner
@@ -463,10 +472,31 @@ class SVGExporter(Exporter):
             self._get_angles(shape, grid, cell_pos), shape_center
         )
         self._log.debug(
-            f"Star=(cxy={shape_center}, ro/i={radius_outer}/{radius_inner}, sides={shape.sides}, points={points} params={svg_params})"
+            "Star=(cxy=%s, ro/i=%d/%d, sides=%s, points=%s params=%s)", shape_center, radius_outer, radius_inner, shape.sides, points, svg_params
         )
-        self._log.debug(f"Points flatmap = {discreet_points}")
+        self._log.debug("Points flatmap = %s", discreet_points)
         return {}, [svg.Polygon(id=shape_id, points=discreet_points, **svg_params)]
+
+    def create_text(
+        self,
+        shape: Text,
+        grid: Grid,
+        cell_pos: Coordinates,
+        shape_center: Coordinates | None = None,
+        shape_id: str | None = None,
+    ) -> SVGElementCreation:
+        "Creates an SVG text shape."
+        svg_params = self._extract_standard_svg_params(shape, grid)
+        font_size = grid.cfg.font_size
+        # x = shape_center[0] - len(shape.content) * font_size / 2
+        # y = shape_center[1] + font_size / 2
+        x = shape_center[0] - len(shape.content) * font_size / 4
+        y = shape_center[1] + font_size / 4
+        # Normalise all values
+        x, y = self.normalize_numbers(x, y)
+        self._log.debug("Text=(xy=(%d,%d), font=%s, text=%s |%d|)", x, y, font_size, shape.content, len(shape.content))
+        # TODO Calculate x and y (baseline) according to font-size, text size and shape center
+        return {}, [svg.Text(id=shape_id, text=shape.content, x=x, y=y, font_size=font_size, **svg_params)]
 
     def create_triangle(
         self,
@@ -495,23 +525,39 @@ class SVGExporter(Exporter):
         # Normalise all values
         x, y, height, width = self.normalize_numbers(x, y, height, width)
         self._log.debug(
-            f"Triangle=(cxy={shape_center}, height={height}, width={width}, points={points} params={svg_params})"
+            "Triangle=(cxy=%s, height=%d, width=%d, points=%s params=%s)", shape_center, height, width, points, svg_params
         )
         return {}, [svg.Polygon(id=shape_id, points=discreet_points, **svg_params)]
 
     def _calculate_rotation_transform(self, angles, shape_center) -> str | None:
+        """
+        Calculates the transformation necessary for a rotation.
+
+        :param angles: angles control matrix to apply
+        :param shape_center: the coordinates of the center of the shape
+        """
         cx, cy = apply_all(Converters.to_float(2), shape_center.x, shape_center.y)
         transform = None
         if angles[0] and angles[0] != angles[1]:
             angle = angles[1] - angles[0]
             transform = f"rotate({angle.degrees} {cx} {cy})"
-            self._log.debug(f"Rotation: {angles[1]} => {angles[0]}")
+            self._log.debug("Rotation: %s => %s", angles[1], angles[0])
         return transform
 
     def _discreetise(self, points: list[Vector]) -> list:
+        """
+        Normalises the numbers of a list of vectors.
+        """
         return self.normalize_numbers(*[c for point in points for c in point.coords])
 
     def _extract_standard_svg_params(self, shape: Shape, grid: Grid) -> dict:
+        """
+        Extracts standard SVG parameters from a shape and the grid configuration.
+
+        :param shape: Shape to extract configuration of
+        :param grid: Grid to extract default configuration from
+        :return: a configuration dictionary
+        """
         params = {}
         for svg_key, shape_key, supplier in [
             ("fill", "fill", lambda s: s.fill),

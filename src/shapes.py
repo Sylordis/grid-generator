@@ -1,8 +1,10 @@
+"""Defines all abstract Shapes classes to be used by the engine."""
+
 from abc import ABC
-from colour import Color
 from dataclasses import dataclass
 from enum import StrEnum
 
+from colour import Color
 
 from .utils.geometry import Angle
 from .utils.units import Size
@@ -10,6 +12,7 @@ from .utils.units import Size
 
 @dataclass
 class Shape(ABC):
+    "Base abstract shape class."
     border_color: Color | None = None
     border_width: int = 0
     fill: Color | None = None
@@ -21,6 +24,7 @@ class Shape(ABC):
 
 
 class ArrowHeadShape(StrEnum):
+    "Arrow head shape enum."
     DIAMOND = "diamond"
     INDENT = "indent"
     TRIANGLE = "triangle"
@@ -28,6 +32,7 @@ class ArrowHeadShape(StrEnum):
 
 @dataclass
 class Arrow(Shape):
+    "Arrow shape."
     head_size: Size | None = Size("200%")
     stroke_width: Size | None = None # Aesthetics: 1/8 of cell size
     style: ArrowHeadShape | None = ArrowHeadShape.TRIANGLE
@@ -49,6 +54,7 @@ class Circle(Shape):
 
 @dataclass
 class Diamond(Shape):
+    "Diamond shape."
     pass
 
 
@@ -72,14 +78,14 @@ class Hexagon(Shape):
     ---
     :param width: radius
     """
-
     pass
 
 
 @dataclass
 class Rectangle(Shape):
+    "Rectangle shape, includes squares."
     border_radius: int = 0
-    _is_square: bool = False
+    is_square: bool = False
 
 
 @dataclass
@@ -96,5 +102,12 @@ class Star(Shape):
 
 
 @dataclass
+class Text(Shape):
+    "Text shape."
+    content: str = ""
+    font_size : int = 0
+
+@dataclass
 class Triangle(Shape):
+    "Triangle shape."
     pass

@@ -10,5 +10,6 @@ from .shapes import (
     Hexagon,
     Rectangle,
     Star,
+    Text,
     Triangle,
 )

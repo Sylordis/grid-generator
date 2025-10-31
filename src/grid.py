@@ -68,6 +68,8 @@ class GridConfig(Searchable):
     "Size of the grid cells (in pixels)."
     grid_over_components: bool = True
     "Whether the grid is displayed on top of the components (True, default) or under (False)."
+    font_size : int = 16 * 0.8
+    "Font size in pixels."
 
     def __post_init__(self):
         if not self.border_color:

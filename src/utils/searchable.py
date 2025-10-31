@@ -1,8 +1,11 @@
 import logging
-from typing import Any, Callable
+from typing import Any
 
 
 class Searchable:
+    """
+    A searchable class is a class that can be searched for values according to its internal dictionary and updated as such.
+    """
 
     def get(self, key, value) -> Any:
         """
@@ -27,7 +30,7 @@ class Searchable:
         :return: the first value which is not None, default value otherwise.
         """
         logging.getLogger().debug(
-            f"extract key={key}, value={value}, dict={self.get(key, value)}, default={default}"
+            "extract key=%s, value=%s, dict=%s, default=%s", key, value, self.get(key, value), default
         )
         nvalue = value
         if not value:
@@ -46,7 +49,7 @@ class Searchable:
             if "." in k:
                 keys = k.split(".")
                 nkey = k[k.index(".") + 1 :]
-                logging.getLogger().debug(f"compound update: {k} => {nkey}: {v}")
+                logging.getLogger().debug("compound update: %s => %s: %s", k, nkey, v)
                 self.__dict__[keys[0]].update({nkey: v})
             elif hasattr(self, k):
                 setattr(self, k, v)

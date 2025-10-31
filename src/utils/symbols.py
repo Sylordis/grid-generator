@@ -17,6 +17,8 @@ class GridSymbol(StrEnum):
     "End sequence for configuration."
     UNIVERSAL_SEPARATOR = ";"
     "Universal separator."
+    TXT_PATTERN = r"\"[A-Za-z0-9!]+\""
+    "Pattern for text shapes."
 
 
 class ShapeSymbol(StrEnum):
