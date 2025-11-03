@@ -3,6 +3,7 @@ from enum import StrEnum
 
 class GridSymbol(StrEnum):
     "Symbols for the grid and generics."
+
     CELL_SEPARATOR = "|"
     "Delimiter for cells."
     PARAMS_START = "["
@@ -23,6 +24,7 @@ class GridSymbol(StrEnum):
 
 class ShapeSymbol(StrEnum):
     "Shortcut symbols for shapes."
+
     ARROW = "A"
     CIRCLE = "C"
     DIAMOND = "D"
@@ -34,3 +36,11 @@ class ShapeSymbol(StrEnum):
     SQUARE = "Sq"
     STAR = "St"
     TRIANGLE = "T"
+
+
+class CharFilter(StrEnum):
+    "Shortcut for character filters."
+
+    NORMAL_CHARS = r"[aceimnorsuvwxz]"
+    HIGH_CHARS = r"[bdfhkltA-Z0-9!?()[\]$@]"
+    LOW_CHARS = r"[gjpqy]"

@@ -30,7 +30,11 @@ class Searchable:
         :return: the first value which is not None, default value otherwise.
         """
         logging.getLogger().debug(
-            "extract key=%s, value=%s, dict=%s, default=%s", key, value, self.get(key, value), default
+            "extract key=%s, value=%s, dict=%s, default=%s",
+            key,
+            value,
+            self.get(key, value),
+            default,
         )
         nvalue = value
         if not value:

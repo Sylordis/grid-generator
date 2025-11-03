@@ -1,5 +1,4 @@
 from __future__ import annotations
-from dataclasses import dataclass
 from enum import StrEnum
 from itertools import zip_longest
 import math
@@ -7,6 +6,7 @@ from typing import Callable, TypeAlias
 
 
 class Vector:
+    "Vector represents a vector in a variable amount of dimensions."
 
     def __init__(self, *values, d: int = None):
         """
@@ -22,14 +22,17 @@ class Vector:
 
     @property
     def x(self):
+        "Gets the first vector's component, associated to X axis."
         return self.coords[0]
 
     @property
     def y(self):
+        "Gets the second vector's component, associated to Y axis."
         return self.coords[1]
 
     @property
     def z(self):
+        "Gets the third vector's component, associated to Z."
         return self.coords[2]
 
     def __add__(self, o):
@@ -56,7 +59,13 @@ class Vector:
         return self.__and__(converter)
 
     @staticmethod
-    def all(value, length=2) -> Vector:
+    def all(value: int | float, length: int=2) -> Vector:
+        """
+        Creates a new vector with the same value in all dimensions.
+
+        :param value: value to fill the vector with.
+        :param length: dimensions of the vector, default 2.
+        """
         if not isinstance(value, (float, int)):
             raise ValueError("Provided value must be a number (int or float)")
         return Vector(*[value] * length)
@@ -142,7 +151,8 @@ Point: TypeAlias = Vector
 
 
 class AngleMeasurement(StrEnum):
-    DEGREES = ("degrees",)
+    "Type of angles."
+    DEGREES = "degrees"
     RADIANS = "radians"
 
 

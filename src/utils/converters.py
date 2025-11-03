@@ -1,4 +1,4 @@
-from typing import Callable, Any, TypeAlias
+from typing import Callable, Any
 
 
 def is_percentile(value) -> bool:
@@ -55,6 +55,7 @@ def apply_all(m: Callable[[], Any], *values) -> tuple:
 
 
 class Converters:
+    "Simple static methods to create callables to convert data from one type to another."
 
     @staticmethod
     def to_float(precision: int) -> Callable[[Any], float]:

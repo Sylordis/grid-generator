@@ -11,12 +11,14 @@ from .units import Size
 
 class PositionShardHorizontal(StrEnum):
     "Horizontal positioning, `None` is Center."
+
     LEFT = "left"
     RIGHT = "right"
 
 
 class PositionShardVertical(StrEnum):
     "Vertical positioning, `None` is Center/Middle"
+
     BOTTOM = "bottom"
     TOP = "top"
 

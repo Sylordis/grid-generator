@@ -31,7 +31,7 @@ class CfgParser:
         cfg: dict[str, Any] = {}
         sizes = []
         colors = []
-        self._log.debug(f"cfg_txt={cfg_txt}")
+        self._log.debug("cfg_txt=%s", cfg_txt)
         for param in cfg_txt:
             match = re.match(r"([a-z]+(-[a-z-]+)?)=(.*)", param)
             angle_match = re.match(r"(-?\d+)d", param)
@@ -42,7 +42,7 @@ class CfgParser:
             if match:
                 prop_name = match.group(1).replace("-", "_")
                 cfg[prop_name] = match.group(3)
-                self._log.debug(f"Direct cfg {prop_name}={match.group(3)}")
+                self._log.debug("Direct cfg %s=%s", prop_name, match.group(3))
             elif Layout.is_layout(param):
                 cfg.update(self._parse_layout(param))
             elif self._position_factory.is_position(param):
@@ -54,10 +54,10 @@ class CfgParser:
             elif color:
                 colors.append(color)
             else:
-                self._log.warning(f"Unknown cfg param '{param}'")
+                self._log.warning("Unknown cfg param '%s'", param)
         cfg.update(self._do_sizes(sizes))
         cfg.update(self._do_colors(colors))
-        self._log.debug(f"cfg={cfg}")
+        self._log.debug("cfg=%s", cfg)
         return cfg
 
     def _manage_sizes(self, param: str, sizes: list):
@@ -68,26 +68,26 @@ class CfgParser:
         return sizes
 
     def _parse_layout(self, txt: str) -> dict[str, Any]:
-        self._log.debug(f"layouting=[{txt}]")
+        self._log.debug("layouting=[%s]", txt)
         ret = {}
         ntxt = txt
         sizes = []
         keypoints = []
         if Layout.is_layout_shortcut(ntxt):
             ntxt = Layout.expand_shortcut(ntxt)
-        self._log.debug(f"Layout txt={ntxt}")
+        self._log.debug("Layout txt=%s", ntxt)
         if GridSymbol.PARAMS_START in ntxt:
             layout_cfg = ntxt[ntxt.index(GridSymbol.PARAMS_START) :]
             ntxt = ntxt[: -len(layout_cfg)]
             params = layout_cfg[1:-1].split(GridSymbol.PARAMS_SEPARATOR)
-            self._log.debug(f"layout options: {params}")
+            self._log.debug("layout options: %s", params)
             for param in params:
                 if self._position_factory.is_position(param):
                     keypoints.append(self._position_factory.get_position(param))
                 elif Size.is_size(param):
                     sizes.append(Size(param))
                 else:
-                    self._log.warning(f"Unknown layout parameter '{param}'.")
+                    self._log.warning("Unknown layout parameter '%s'.", param)
         ret.update({f"layout.{k}": p for k, p in self._do_sizes(sizes)})
         ret["layout.keypoints"] = keypoints
         ret["layout.display_type"] = ntxt

@@ -68,8 +68,6 @@ class GridConfig(Searchable):
     "Size of the grid cells (in pixels)."
     grid_over_components: bool = True
     "Whether the grid is displayed on top of the components (True, default) or under (False)."
-    font_size : int = 16 * 0.8
-    "Font size in pixels."
 
     def __post_init__(self):
         if not self.border_color:
@@ -86,6 +84,8 @@ class ShapesConfig(Searchable):
     "Color of the shape border."
     border_width: int = 0
     "Default shape border width."
+    default_font_family: str = "Arial"
+    "Default font family for texts."
     fill: Color | None = None
     "Default colour of the objects in the grid."
     base_cell_ratio: Size = Size("80%")
@@ -127,7 +127,8 @@ class Grid:
 
         :param col_or_pos: either the column number or an (x,y) coordinate.
         :param row: row number, not used if col_or_pos is a Position.
-        :return: the corresponding cell or None if the type of the first parameter is neither int nor Position.
+        :return: the corresponding cell or None if the type of the first parameter is neither int
+        nor Position.
         """
         if isinstance(col_or_pos, int):
             return self.content[row][col_or_pos]
@@ -150,7 +151,8 @@ class Grid:
         self, cell_pos: Coordinates
     ) -> tuple[Coordinates, Coordinates]:
         """
-        Calculate the bounds of a given cell in matter of coordinates, giving the highest left point and the lowest right point.
+        Calculate the bounds of a given cell in matter of coordinates, giving the highest left
+        point and the lowest right point.
 
         :param cell_pos: position of the cell in the grid
         :return: a tuple of 2 coordinates.
@@ -193,12 +195,16 @@ class Grid:
         if base:
             value *= base.value
         self._log.debug(
-            f"calc. size: [{factors}] base={base} default={default}, value={value} orig={value}"
+            "calc. size: [%s] base=%s default=%s, value=%s",
+            factors,
+            base,
+            default,
+            value
         )
         for f in factors:
             if f:
                 value *= f.value
-                self._log.debug(f"calc sizef: {f} => {value}")
+                self._log.debug("calc sizef: %s => %s", f, value)
                 if not f.is_relative():
                     all_relative = False
                     break
@@ -218,7 +224,8 @@ class Grid:
         default_height: Size = None,
     ) -> tuple[float, float]:
         """
-        Calculate both width and height based on shape's configuration and current grid's default configuration.
+        Calculate both width and height based on shape's configuration and current grid's default
+        configuration.
 
         :param shape: shape to calculate the dimensions of
         :param cell: cell to check for default size
@@ -234,7 +241,7 @@ class Grid:
         if not default_width:
             default_width = self.shapes_cfg.base_cell_ratio
         width = self.calculate_size(*widths, default=default_width)
-        self._log.debug(f"width: {widths}, default={default_width}")
+        self._log.debug("width: %s, default=%s", widths, default_width)
 
         # Height
         heights = [shape.height]
@@ -246,6 +253,6 @@ class Grid:
         if not default_height:
             default_height = self.shapes_cfg.base_cell_ratio
         height = self.calculate_size(*heights, default=default_height)
-        self._log.debug(f"height: {heights}, default={default_height}")
+        self._log.debug("height: %s, default=%s", heights, default_height)
 
         return width, height

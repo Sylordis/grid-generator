@@ -29,6 +29,7 @@ class DrawToolConfig:
     """
     Configuration for the tool.
     """
+
     dest_dir: Path | None = None
     "Destination directory for created images."
     do_export: bool = True
@@ -245,7 +246,7 @@ class GridDrawingTool:
         :param shape_cfg: configuration of the shapes to be created (if any).
         :return: a shape or None
         """
-        shape : Shape | None = None
+        shape: Shape | None = None
         pattern = re.compile("^" + GridSymbol.TXT_PATTERN + "$")
         if pattern.match(shape_id):
             shape = Text(**shape_cfg)

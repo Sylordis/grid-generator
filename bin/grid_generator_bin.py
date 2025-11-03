@@ -17,7 +17,7 @@ class ArgParser:
     def __init__(self):
         self.parser = argparse.ArgumentParser(
             prog="python -m grid-generator",
-            description="Runs the python grid generator tool over multiple source files."
+            description="Runs the python grid generator tool over multiple source files.",
         )
         self.parser.add_argument("input_file", help="Input file.", nargs="+")
         self.parser.add_argument(

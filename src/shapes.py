@@ -13,6 +13,7 @@ from .utils.units import Size
 @dataclass
 class Shape(ABC):
     "Base abstract shape class."
+
     border_color: Color | None = None
     border_width: int = 0
     fill: Color | None = None
@@ -25,6 +26,7 @@ class Shape(ABC):
 
 class ArrowHeadShape(StrEnum):
     "Arrow head shape enum."
+
     DIAMOND = "diamond"
     INDENT = "indent"
     TRIANGLE = "triangle"
@@ -33,8 +35,9 @@ class ArrowHeadShape(StrEnum):
 @dataclass
 class Arrow(Shape):
     "Arrow shape."
+
     head_size: Size | None = Size("200%")
-    stroke_width: Size | None = None # Aesthetics: 1/8 of cell size
+    stroke_width: Size | None = None  # Aesthetics: 1/8 of cell size
     style: ArrowHeadShape | None = ArrowHeadShape.TRIANGLE
     # TODO Choose arrow head position: start, end, start+end
 
@@ -49,13 +52,10 @@ class Circle(Shape):
     Width is the radius.
     """
 
-    pass
-
 
 @dataclass
 class Diamond(Shape):
     "Diamond shape."
-    pass
 
 
 @dataclass
@@ -69,8 +69,6 @@ class Ellipse(Shape):
     :param height: Y radius.
     """
 
-    pass
-
 
 class Hexagon(Shape):
     """
@@ -78,12 +76,12 @@ class Hexagon(Shape):
     ---
     :param width: radius
     """
-    pass
 
 
 @dataclass
 class Rectangle(Shape):
     "Rectangle shape, includes squares."
+
     border_radius: int = 0
     is_square: bool = False
 
@@ -104,10 +102,11 @@ class Star(Shape):
 @dataclass
 class Text(Shape):
     "Text shape."
+
     content: str = ""
-    font_size : int = 0
+    font_size: int = 0
+
 
 @dataclass
 class Triangle(Shape):
     "Triangle shape."
-    pass

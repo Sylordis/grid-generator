@@ -6,6 +6,7 @@ from typing import Callable
 
 class SizeUnitKey(StrEnum):
     "Unit types for sizes."
+
     PERCENTILE = "%"
     PIXELS = "px"
 
@@ -13,6 +14,7 @@ class SizeUnitKey(StrEnum):
 @dataclass(frozen=True)
 class SizeUnit:
     "Unit for size."
+
     key: SizeUnitKey
     "Key for unit."
     relative: bool
@@ -46,16 +48,24 @@ class Size:
             self._unit = SIZE_UNITS[SizeUnitKey.PIXELS]
 
     def is_relative(self):
-        "Is this unit a relative one, i.e. requires another value to be provided for a final calculation."
+        """
+        Is this unit a relative one, i.e. requires another value to be provided for a final
+        calculation.
+        """
         return self._unit.relative
 
     @property
     def value(self) -> float:
         "Gets the floating value of this size."
-        return self._unit.value_supplier(self._value) if self._unit and self._unit.value_supplier else self._value
+        return (
+            self._unit.value_supplier(self._value)
+            if self._unit and self._unit.value_supplier
+            else self._value
+        )
 
     @property
     def unit(self) -> SizeUnit:
+        "Gets the unit of the size."
         return self._unit
 
     def __str__(self):
