@@ -1,0 +1,3 @@
+"t"|"e"|"s"|"t"|"y"
+"aaa"|"BB"|"ABC"|"Hello!"
+"bbb"{6}|"1"|"10"|{vertical}"a";"b";"c"

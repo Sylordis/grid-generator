@@ -205,7 +205,7 @@ class SVGExporter(Exporter):
         shape: Arrow,
         grid: Grid,
         cell_pos: Coordinates,
-        shape_center: Coordinates | None = None,
+        shape_center: Coordinates,
         shape_id: str | None = None,
     ) -> SVGElementCreation:
         "Creates an SVG arrow shape."
@@ -264,7 +264,7 @@ class SVGExporter(Exporter):
         return defs, elts
 
     def create_arrow_head(
-        self, shape: Arrow, head_id: str, cfg_head: dict = None, cfg_marker: dict = None
+        self, shape: Arrow, head_id: str, cfg_head: dict | None = None, cfg_marker: dict | None = None
     ):
         "Creates the head of an SVG arrow shape."
         if cfg_head is None:
@@ -311,7 +311,7 @@ class SVGExporter(Exporter):
         shape: Circle,
         grid: Grid,
         cell_pos: Coordinates,
-        shape_center: Coordinates | None = None,
+        shape_center: Coordinates,
         shape_id: str | None = None,
     ) -> SVGElementCreation:
         "Creates an SVG circle shape."
@@ -336,16 +336,16 @@ class SVGExporter(Exporter):
         shape: Diamond,
         grid: Grid,
         cell_pos: Coordinates,
-        shape_center: Coordinates | None = None,
+        shape_center: Coordinates,
         shape_id: str | None = None,
     ) -> SVGElementCreation:
         "Creates an SVG diamond shape."
         svg_params = self._extract_standard_svg_params(shape, grid)
         width, height = grid.calculate_dimensions(
             shape,
-            cell=grid.cell(cell_pos),
-            cell_alt=True,
-            default_width=grid.shapes_cfg.base_cell_ratio_2,
+            cell = grid.cell(cell_pos),
+            cell_alt = True,
+            default_width = grid.shapes_cfg.base_cell_ratio_2,
         )
         svg_params["transform"] = self._calculate_rotation_transform(
             self._get_angles(shape, grid, cell_pos), shape_center
@@ -368,7 +368,7 @@ class SVGExporter(Exporter):
         shape: Ellipse,
         grid: Grid,
         cell_pos: Coordinates,
-        shape_center: Coordinates | None = None,
+        shape_center: Coordinates,
         shape_id: str | None = None,
     ) -> SVGElementCreation:
         "Creates an SVG ellipse shape."
@@ -394,7 +394,7 @@ class SVGExporter(Exporter):
         shape: Hexagon,
         grid: Grid,
         cell_pos: Coordinates,
-        shape_center: Coordinates | None = None,
+        shape_center: Coordinates,
         shape_id: str | None = None,
     ) -> SVGElementCreation:
         "Creates an SVG hexagon shape."
@@ -424,7 +424,7 @@ class SVGExporter(Exporter):
         shape: Rectangle,
         grid: Grid,
         cell_pos: Coordinates,
-        shape_center: Coordinates | None = None,
+        shape_center: Coordinates,
         shape_id: str | None = None,
     ) -> SVGElementCreation:
         "Creates an SVG rectangle shape."
@@ -470,7 +470,7 @@ class SVGExporter(Exporter):
         shape: Star,
         grid: Grid,
         cell_pos: Coordinates,
-        shape_center: Coordinates | None = None,
+        shape_center: Coordinates,
         shape_id: str | None = None,
     ) -> SVGElementCreation:
         "Creates an SVG star shape."
@@ -517,35 +517,43 @@ class SVGExporter(Exporter):
         shape: Text,
         grid: Grid,
         cell_pos: Coordinates,
-        shape_center: Coordinates | None = None,
+        shape_center: Coordinates,
         shape_id: str | None = None,
     ) -> SVGElementCreation:
         "Creates an SVG text shape."
         svg_params = self._extract_standard_svg_params(shape, grid)
-        font_size, _ = grid.calculate_dimensions(
-            shape,
-            cell=grid.cell(cell_pos),
-            default_width=grid.shapes_cfg.base_cell_ratio,
-        )
+        adaptive_font : bool = True
+        if shape.width:
+            font_size = shape.width.value
+            adaptive_font = False
+        else:
+            font_size, _ = grid.calculate_dimensions(
+                shape,
+                cell=grid.cell(cell_pos),
+                default_width=grid.shapes_cfg.base_cell_ratio,
+            )
         self._log.debug(
-            "Text: cell_size=%spx, avail_size=%s, font_size=%s",
+            "Text: cell_size=%spx, avail_size=%s, font_size=%s, center=%s",
             grid.cfg.cell_size,
             grid.calculate_size(grid.shapes_cfg.base_cell_ratio),
-            font_size
+            font_size,
+            shape_center,
         )
-        font : ImageFont = ImageFont.truetype("arial.ttf", size = font_size)
-        # TODO Calculate size
-        self._log.debug("Text size: %s => %s", shape.content, font.getbbox(shape.content))
-        # (left, top, right, bottom) bounding box
-        x, y = self._center_text(shape_center, shape.content, font_size)
+        current_font : ImageFont = ImageFont.truetype("arial.ttf", size = font_size)
+        # TODO Manage base font according to system:
+        # - Arial (Windows)
+        # - Helvetica (Mac & Linux)
+        # - "Nimbus Sans L", "Liberation Sans" (Linux)
+        xy, revised_font = self._center_text(shape.content, grid, shape_center, current_font, adaptive_font)
+        self._log.debug("Text size: %s => %s", shape.content, self._get_text_dimensions(shape.content, revised_font))
         # Normalise all values
-        x, y = self.normalize_numbers(x, y)
+        x, y = self.normalize_numbers(xy[0], xy[1])
         self._log.debug(
             "Text=(center=%s xy=(%d,%d), font-size=%s, text=%s |%d|)",
             shape_center,
             x,
             y,
-            font_size,
+            revised_font.size,
             shape.content,
             len(shape.content)
         )
@@ -555,53 +563,77 @@ class SVGExporter(Exporter):
                 text=shape.content,
                 x=x,
                 y=y,
-                font_size=font_size,
+                font_size=revised_font.size,
                 font_family="sans-serif",
                 **svg_params,
-            ), svg.Circle(
-                fill="green",
-                cx=shape_center[0],
-                cy=shape_center[1],
-                r=1,
             )
         ]
 
     def _center_text(
         self,
-        shape_center: Coordinates,
         text: str,
-        font_size: float,
-    ) -> Coordinates:
+        grid: Grid,
+        shape_center: Coordinates,
+        current_font: ImageFont.FreeTypeFont,
+        adaptative_font: bool,
+    ) -> tuple[Coordinates, ImageFont.FreeTypeFont]:
         """
-        Centers a given text according to its content.
+        Calculates the new position of a text shape in order to center the text in the cell it is
+        in, according to its content and font using text boundaries. If the font is too big and
+        adaptative_font is set, then this method will calculate the available space and reduce the
+        font_size for the shape to fit the boundaries of the cell.
 
-        :param shape_center: original shape's center
-        :param text: text to display
-        :param font_size: font size
-        :return: the corrected coordinates
+        :param text: Text of the shape.
+        :param grid: Grid the shape is in.
+        :param shape_center: Calculated center of the shape from the layout manager.
+        :param current_font: Current font
+        :param adaptative_font: Whether the font size should be adapted to fit. If the user set the
+        font size, it should not be adaptative.
+        :return: The new xy coordinates for the shape (e.g. the bottom left) and the new calculated
+        font if it was adaptative, otherwise returns the same font.
         """
-        # x = shape_center[0] - len(text) * default_font_size / 4
-        # y = shape_center[1] + default_font_size / 4
-        x = shape_center[0] - 8
-        y = shape_center[1] + 3
-        has_lows = len(re.compile(CharFilter.LOW_CHARS).findall(text)) > 0
-        has_highs = len(re.compile(CharFilter.HIGH_CHARS).findall(text)) > 0
-        self._log.debug("center text: xy=(%d,%d) lows=%s highs=%s", x, y, has_lows, has_highs)
-        if has_highs and not has_lows:
-            y = y + font_size / 8
-        elif not has_highs and has_lows:
-            y = y - font_size / 8
-        # if text.isupper():
-        #     x = x - len(text) * font_size / 10
-        self._log.debug("adjusted text: xy=(%d,%d)", x, y)
-        return (x, y)
+        # Check if object is too big for current cell & position
+        width, height, delta = self._get_text_dimensions(text, current_font)
+        revised_font: ImageFont.FreeTypeFont = current_font
+        available_size = grid.calculate_size(grid.shapes_cfg.base_cell_ratio)
+        ratio_width = available_size / width
+        ratio_height = available_size / height
+        self._log.debug(
+            "Text (original): (%sx%s),%s => ratios %s/%s, adaptative? %s",
+            width,
+            height,
+            delta,
+            ratio_width,
+            ratio_height,
+            adaptative_font
+        )
+        if (ratio_height < 1 or ratio_width < 1) and adaptative_font:
+            revised_font = current_font.font_variant(size=current_font.size * min(ratio_width, ratio_height))
+            width, height, delta = self._get_text_dimensions(text, revised_font)
+        x = shape_center[0] - width / 2 - delta[0]
+        y = shape_center[1] + height / 2 - delta[1]
+        return Vector(x, y), revised_font
+    
+    def _get_text_dimensions(self, text: str, font: ImageFont.FreeFontType) -> tuple[float,float,Vector]:
+        """
+        Calculates the dimensions of a text according to its bounding box, in pixels.
+
+        :param text: Content of the text.
+        :param font: Font of the text.
+        :return: Width and height of the text.
+        """
+        left, top, right, bottom = font.getbbox(text)
+        width = right - left
+        height = bottom - top
+        delta = Vector(0 if left >= 0 else left, 0 if top >= 0 else top)
+        return width, height, delta
 
     def create_triangle(
         self,
         shape: Triangle,
         grid: Grid,
         cell_pos: Coordinates,
-        shape_center: Coordinates | None = None,
+        shape_center: Coordinates,
         shape_id: str | None = None,
     ) -> SVGElementCreation:
         "Creates an SVG triangle shape."
@@ -655,7 +687,8 @@ class SVGExporter(Exporter):
 
     def _extract_standard_svg_params(self, shape: Shape, grid: Grid) -> dict:
         """
-        Extracts standard SVG parameters from a shape and the grid configuration.
+        Extracts standard SVG parameters from a shape and the grid configuration if available:
+        fill, border_color and border_width.
 
         :param shape: Shape to extract configuration of
         :param grid: Grid to extract default configuration from
