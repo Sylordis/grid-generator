@@ -43,8 +43,9 @@ A fixed number (int) affixed with `d` or a pre-existing [position/direction](#di
 *Ex:* `48d`, `-930d`, `T`
 
 *FYI:* edge to opposite corner/corner to opposite edge are shown in following sample and results:
-![Arrows from edges to corners](test/data/expected/arrow_edge_to_corners.svg "Arrow edges to corners")
-[Equivalent file for grid-generator](test/data/samples/arrow_edge_to_corners.txt)
+
+![Arrows from edges to corners](/test/data/expected/arrow_edge_to_corners.svg "Arrow edges to corners")
+[Equivalent file for grid-generator](/test/data/samples/arrow_edge_to_corners.txt)
 
 ### Color
 
@@ -166,3 +167,4 @@ Properties do not have to be provided in the order indicated by the table, altho
 - `{45%;blue}` or `{45%x;blue}` are similar to the previous example.
 - `{fill=orange;x15;B}` will set `height` to 15px, `fill` with color orange and `orientation` to bottom (180°).
 - `{80;23%;}` will set `width` to 80 and `height` to 23%.
+
