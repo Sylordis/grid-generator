@@ -1,0 +1,3 @@
+|{line}A{25d};A{-25d}|
+{vertical}A{65d};A{115d}|C{green;70%}|{vertical}A{-65d};A{-115d}
+|{line}A{-205d};A{205d}|

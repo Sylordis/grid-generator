@@ -539,7 +539,7 @@ class SVGExporter(Exporter):
             font_size,
             shape_center,
         )
-        current_font : ImageFont = ImageFont.truetype("arial.ttf", size = font_size)
+        current_font : ImageFont = ImageFont.truetype(grid.cfg.get_default_font(), size = font_size)
         # TODO Manage base font according to system:
         # - Arial (Windows)
         # - Helvetica (Mac & Linux)
@@ -614,7 +614,7 @@ class SVGExporter(Exporter):
         y = shape_center[1] + height / 2 - delta[1]
         return Vector(x, y), revised_font
     
-    def _get_text_dimensions(self, text: str, font: ImageFont.FreeFontType) -> tuple[float,float,Vector]:
+    def _get_text_dimensions(self, text: str, font: ImageFont.FreeTypeFont) -> tuple[float,float,Vector]:
         """
         Calculates the dimensions of a text according to its bounding box, in pixels.
 

@@ -42,6 +42,10 @@ A fixed number (int) affixed with `d` or a pre-existing [position/direction](#di
 
 *Ex:* `48d`, `-930d`, `T`
 
+*FYI:* edge to opposite corner/corner to opposite edge are shown in following sample and results:
+![Arrows from edges to corners](test/data/expected/arrow_edge_to_corners.svg "Arrow edges to corners")
+[Equivalent file for grid-generator](test/data/samples/arrow_edge_to_corners.txt)
+
 ### Color
 
 An hexadecimal value or a string with the name of a colour.
@@ -106,17 +110,18 @@ Properties do not have to be provided in the order indicated by the table.
 For all purposes and intent, shapes don't mix. A latter shape will be layed "on top" of any formerly declared shape in a matter of layers. Mind your own layers.
 
 - `horizontal`: a `line` from left to right (equivalent to `line[L,R]`).
-- `line`: a line starting from a position (start) to another position (end).
+- `line[S,E]`: a line starting from a position (start `S`) to another position (end `E`), see [Directions and Positions](#directions-and-positions)
 - `rhorizontal`: a `line` from right to left (equivalent to `line[R,L]`).
 - `rvertical`: a `line` from bottom to top (reverse vertical, equivalent to `line[B,T]`).
 - `stack`: all shapes are stacked.
 - `vertical`: a `line` from top to bottom (equivalent to `line[T,B]`).
 
 Planned:
-- different geometric shapes (square, arrow, triangle, circle, cross)
+- Different geometric shapes (square, arrow, triangle, circle, cross)
 - `arc`
-- letter shaped
+- Letter shaped
 - `grid`
+- Shortcuts (ex: `H` for `horizontal`)
 
 ## Shapes
 
@@ -132,6 +137,7 @@ Shapes can be used in the input file as the shortcut or the full name.
 | Rectangle | `R` | ø |
 | Square | `Sq` | no `height`, `width` will be used for both. |
 | Star | `St` | `width` will be used for external diameter.<br/>`height` is used for internal diameter (uses default `width`(2)).<br/>Uses `sides`. |
+| Text | `"[..]"` | ø |
 | Triangle | `T` | ø |
 
 Planned:
@@ -139,7 +145,6 @@ Planned:
 - `I` Image
 - `L` Line
 - `P` Polygon
-- `Te` Text
 
 ### Shapes configuration properties (shape_cfg_property)
 

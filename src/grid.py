@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass, field
 import logging
+import platform
 
 from colour import Color
 
@@ -72,6 +73,28 @@ class GridConfig(Searchable):
     def __post_init__(self):
         if not self.border_color:
             self.border_color = Color("#000000")
+
+    def get_default_font(self) -> str:
+        """
+        Gets the default font according to current system.
+
+        See https://pillow.readthedocs.io/en/stable/reference/ImageFont.html#PIL.ImageFont.truetype
+
+        :return: the default font file name
+        :throws: ValueError if the system cannot be determined or is not managed.
+        """
+        font_file : str = None
+        system = platform.system()
+        if system == 'Linux':
+            font_file = "nimbus sans l.ttf"
+        elif system == 'Darwin':
+            font_file = "helvetica.ttf"
+        elif system == 'Windows':
+            font_file = "arial.ttf"
+        else:
+            raise ValueError(f"No default font set for {system}")
+        return font_file
+
 
 
 @dataclass
