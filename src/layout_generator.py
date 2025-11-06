@@ -56,7 +56,7 @@ class LayoutGenerator:
         else:
             self._log.error(
                 "Unknown or unmanaged layout type %s, defaulting to stack.",
-                cell.layout.display_type
+                cell.layout.display_type,
             )
             generator = BasicLayoutGenerators.stacked(grid, cell_pos)
         return generator

@@ -175,7 +175,7 @@ class GridDrawingTool:
             # Matching shapes
             self._log.debug("Matching shapes: %s", cell_text_processed)
             pattern = (
-                r"((\d*)([A-Z][a-z]*|\"[A-Za-z0-9!]+\")("
+                r"((\d*)([A-Z][a-z]*|\"[^\"]+\")("
                 + re.escape(GridSymbol.CFG_START)
                 + "([^"
                 + GridSymbol.CFG_END

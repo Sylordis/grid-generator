@@ -83,18 +83,17 @@ class GridConfig(Searchable):
         :return: the default font file name
         :throws: ValueError if the system cannot be determined or is not managed.
         """
-        font_file : str = None
+        font_file: str = None
         system = platform.system()
-        if system == 'Linux':
+        if system == "Linux":
             font_file = "nimbus sans l.ttf"
-        elif system == 'Darwin':
+        elif system == "Darwin":
             font_file = "helvetica.ttf"
-        elif system == 'Windows':
+        elif system == "Windows":
             font_file = "arial.ttf"
         else:
             raise ValueError(f"No default font set for {system}")
         return font_file
-
 
 
 @dataclass
@@ -222,7 +221,7 @@ class Grid:
             factors,
             base,
             default,
-            value
+            value,
         )
         for f in factors:
             if f:

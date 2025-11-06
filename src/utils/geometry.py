@@ -59,7 +59,7 @@ class Vector:
         return self.__and__(converter)
 
     @staticmethod
-    def all(value: int | float, length: int=2) -> Vector:
+    def all(value: int | float, length: int = 2) -> Vector:
         """
         Creates a new vector with the same value in all dimensions.
 
@@ -152,6 +152,7 @@ Point: TypeAlias = Vector
 
 class AngleMeasurement(StrEnum):
     "Type of angles."
+
     DEGREES = "degrees"
     RADIANS = "radians"
 

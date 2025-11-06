@@ -1,6 +1,7 @@
 """Exporter for SVG format."""
 
 from dataclasses import dataclass
+import html
 from pathlib import Path
 import re
 from typing import TypeAlias
@@ -25,12 +26,16 @@ from ..shapes import (
 )
 from ..utils.converters import apply_all, Converters
 from ..utils.geometry import rotate, Angle, Coordinates, Vector
-from ..utils.symbols import CharFilter
 from ..utils.units import Size
 from ..layout_generator import LayoutGenerator
 
 
-SVGElementCreation: TypeAlias = tuple[dict[str, list[svg.Element]], list[svg.Element]]
+SVGDefs: TypeAlias = dict[str, list[svg.Element]]
+"""
+Dictionary of definitions for an SVG file, the dictionary ensures that the same definition is not
+repeated multiple times.
+"""
+SVGElementCreation: TypeAlias = tuple[SVGDefs, list[svg.Element]]
 """
 Type representing the produced result of creating SVG elements, with a dictionary for definitions,
 and a list for created SVG normal elements.
@@ -264,7 +269,11 @@ class SVGExporter(Exporter):
         return defs, elts
 
     def create_arrow_head(
-        self, shape: Arrow, head_id: str, cfg_head: dict | None = None, cfg_marker: dict | None = None
+        self,
+        shape: Arrow,
+        head_id: str,
+        cfg_head: dict | None = None,
+        cfg_marker: dict | None = None,
     ):
         "Creates the head of an SVG arrow shape."
         if cfg_head is None:
@@ -343,9 +352,9 @@ class SVGExporter(Exporter):
         svg_params = self._extract_standard_svg_params(shape, grid)
         width, height = grid.calculate_dimensions(
             shape,
-            cell = grid.cell(cell_pos),
-            cell_alt = True,
-            default_width = grid.shapes_cfg.base_cell_ratio_2,
+            cell=grid.cell(cell_pos),
+            cell_alt=True,
+            default_width=grid.shapes_cfg.base_cell_ratio_2,
         )
         svg_params["transform"] = self._calculate_rotation_transform(
             self._get_angles(shape, grid, cell_pos), shape_center
@@ -522,7 +531,7 @@ class SVGExporter(Exporter):
     ) -> SVGElementCreation:
         "Creates an SVG text shape."
         svg_params = self._extract_standard_svg_params(shape, grid)
-        adaptive_font : bool = True
+        adaptive_font: bool = True
         if shape.width:
             font_size = shape.width.value
             adaptive_font = False
@@ -539,13 +548,20 @@ class SVGExporter(Exporter):
             font_size,
             shape_center,
         )
-        current_font : ImageFont = ImageFont.truetype(grid.cfg.get_default_font(), size = font_size)
-        # TODO Manage base font according to system:
-        # - Arial (Windows)
-        # - Helvetica (Mac & Linux)
-        # - "Nimbus Sans L", "Liberation Sans" (Linux)
-        xy, revised_font = self._center_text(shape.content, grid, shape_center, current_font, adaptive_font)
-        self._log.debug("Text size: %s => %s", shape.content, self._get_text_dimensions(shape.content, revised_font))
+        current_font: ImageFont = ImageFont.truetype(
+            grid.cfg.get_default_font(), size=font_size
+        )
+        xy, revised_font = self._center_text(
+            shape.content, grid, shape_center, current_font, adaptive_font
+        )
+        svg_params["transform"] = self._calculate_rotation_transform(
+            self._get_angles(shape, grid, cell_pos), shape_center
+        )
+        self._log.debug(
+            "Text size: %s => %s",
+            shape.content,
+            self._get_text_dimensions(shape.content, revised_font),
+        )
         # Normalise all values
         x, y = self.normalize_numbers(xy[0], xy[1])
         self._log.debug(
@@ -554,13 +570,13 @@ class SVGExporter(Exporter):
             x,
             y,
             revised_font.size,
-            shape.content,
-            len(shape.content)
+            html.escape(shape.content),
+            len(shape.content),
         )
         return {}, [
             svg.Text(
                 id=shape_id,
-                text=shape.content,
+                text=html.escape(shape.content),
                 x=x,
                 y=y,
                 font_size=revised_font.size,
@@ -605,16 +621,21 @@ class SVGExporter(Exporter):
             delta,
             ratio_width,
             ratio_height,
-            adaptative_font
+            adaptative_font,
         )
         if (ratio_height < 1 or ratio_width < 1) and adaptative_font:
-            revised_font = current_font.font_variant(size=current_font.size * min(ratio_width, ratio_height))
+            revised_font = current_font.font_variant(
+                size=current_font.size * min(ratio_width, ratio_height)
+            )
             width, height, delta = self._get_text_dimensions(text, revised_font)
         x = shape_center[0] - width / 2 - delta[0]
         y = shape_center[1] + height / 2 - delta[1]
+        # TODO There are still some centering problems
         return Vector(x, y), revised_font
-    
-    def _get_text_dimensions(self, text: str, font: ImageFont.FreeTypeFont) -> tuple[float,float,Vector]:
+
+    def _get_text_dimensions(
+        self, text: str, font: ImageFont.FreeTypeFont
+    ) -> tuple[float, float, Vector]:
         """
         Calculates the dimensions of a text according to its bounding box, in pixels.
 

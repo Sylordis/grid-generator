@@ -117,13 +117,6 @@ For all purposes and intent, shapes don't mix. A latter shape will be layed "on 
 - `stack`: all shapes are stacked.
 - `vertical`: a `line` from top to bottom (equivalent to `line[T,B]`).
 
-Planned:
-- Different geometric shapes (square, arrow, triangle, circle, cross)
-- `arc`
-- Letter shaped
-- `grid`
-- Shortcuts (ex: `H` for `horizontal`)
-
 ## Shapes
 
 Shapes can be used in the input file as the shortcut or the full name.
@@ -140,12 +133,6 @@ Shapes can be used in the input file as the shortcut or the full name.
 | Star | `St` | `width` will be used for external diameter.<br/>`height` is used for internal diameter (uses default `width`(2)).<br/>Uses `sides`. |
 | Text | `"[..]"` | ø |
 | Triangle | `T` | ø |
-
-Planned:
-- `Cr` Cross
-- `I` Image
-- `L` Line
-- `P` Polygon
 
 ### Shapes configuration properties (shape_cfg_property)
 
@@ -167,4 +154,3 @@ Properties do not have to be provided in the order indicated by the table, altho
 - `{45%;blue}` or `{45%x;blue}` are similar to the previous example.
 - `{fill=orange;x15;B}` will set `height` to 15px, `fill` with color orange and `orientation` to bottom (180°).
 - `{80;23%;}` will set `width` to 80 and `height` to 23%.
-
