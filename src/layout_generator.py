@@ -15,7 +15,8 @@ class BasicLayoutGenerators:
     @staticmethod
     def stacked(grid: Grid, cell_pos: Coordinates):
         """
-        Generates the positions for objects in a stacked layout, i.e. all objects stacked in the middle.
+        Generates the positions for objects in a stacked layout, i.e. all objects stacked in the
+        middle.
 
         :param grid: the grid where to generated the layout for
         :param cell_pos: the position of the cell to generate the layout for
@@ -38,7 +39,8 @@ class LayoutGenerator:
     def generate(self, grid: Grid, cell_pos: Coordinates):
         """
         Creates the generator of shapes' positions for the proper layout.
-        This method is a dispatcher to other methods in order to create generators according to layouts.
+        This method is a dispatcher to other methods in order to create generators according to
+        layouts.
 
         :param grid: grid
         :param cell_pos: coordinates of the cell in the grid
@@ -46,21 +48,22 @@ class LayoutGenerator:
         """
         cell = grid.cell(cell_pos)
         generator = None
-        self._log.debug(f"Layout {cell.layout}")
+        self._log.debug("Layout %s", cell.layout)
         if not cell.layout or cell.layout.display_type == LayoutType.STACK:
             generator = BasicLayoutGenerators.stacked(grid, cell_pos)
         elif cell.layout.display_type == LayoutType.LINE:
             generator = self.generate_lined(grid, cell_pos)
         else:
             self._log.error(
-                f"Unknown or unmanaged layout type {cell.layout.display_type}, defaulting to stack."
+                "Unknown or unmanaged layout type %s, defaulting to stack.",
+                cell.layout.display_type
             )
             generator = BasicLayoutGenerators.stacked(grid, cell_pos)
         return generator
 
     def generate_lined(self, grid: Grid, cell_pos: Coordinates):
         """
-        Generates the positions for a line layout.
+        Generates shape positions for a line layout.
 
         :param grid: grid
         :param cell_pos: coordinates of the cell in the grid
@@ -87,9 +90,11 @@ class LayoutGenerator:
 
     def _generate_segment(self, start: Coordinates, end: Coordinates, n: int):
         """
-        Generates positions of entities in a segment, i.e. distributing entities at equidistant points along the segment itself.
+        Generates positions of entities in a segment, i.e. distributing entities at equidistant
+        points along the segment itself.
 
-        For N entities, the segment will be split in N+1 space and the entities will be placed in between those spaces.
+        For N entities, the segment will be split in N+1 space and the entities will be placed in
+        between those spaces.
 
         :param start: start coordinates of the segment
         :param end: end coordinates of the segment

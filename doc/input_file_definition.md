@@ -111,7 +111,7 @@ Properties do not have to be provided in the order indicated by the table.
 For all purposes and intent, shapes don't mix. A latter shape will be layed "on top" of any formerly declared shape in a matter of layers. Mind your own layers.
 
 - `horizontal`: a `line` from left to right (equivalent to `line[L,R]`).
-- `line[S,E]`: a line starting from a position (start `S`) to another position (end `E`), see [Directions and Positions](#directions-and-positions)
+- `line[S,E]`: a line starting from a position (start `S`) to another position (end `E`), see [Directions and Positions](#directions-and-positions). Default are `S`=`` and `E`=``
 - `rhorizontal`: a `line` from right to left (equivalent to `line[R,L]`).
 - `rvertical`: a `line` from bottom to top (reverse vertical, equivalent to `line[B,T]`).
 - `stack`: all shapes are stacked.
