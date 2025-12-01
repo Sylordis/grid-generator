@@ -4,10 +4,10 @@ description = 'Python tool to generate shapes in a grid from an simple text repr
 version = "1.0"
 dynamic = ["version","dependencies"]
 authors = [
-    {name = "Sylvain Domenjoud", email = "s.domenjoud@cgi.com"},
+    {name = "Sylvain Domenjoud", email = "s.domenjoud@gmail.com"},
 ]
 maintainers = [
-    {name = "Sylvain Domenjoud", email = "s.domenjoud@cgi.com"},
+    {name = "Sylvain Domenjoud", email = "s.domenjoud@gmail.com"},
 ]
 requires-python = ">= 3.13"
 

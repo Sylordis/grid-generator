@@ -29,10 +29,17 @@ PositionShard: TypeAlias = PositionShardHorizontal | PositionShardVertical | Non
 @dataclass(frozen=True)
 class Position:
     valign: PositionShardVertical | None
+    "Vertical shard alignment."
     halign: PositionShardHorizontal | None
+    "Horizontal shard alignment."
     shortcuts: list[str] | None = None
+    "Predefined shortcuts."
     relative_coords: Vector | None = None
+    """
+    Coordinates of the position in a cell, with a cell as an atomic measurement unit, 0 and 1 being the opposite edges.
+    """
     _angle: Angle | int | float | None = None
+    "Angle value (for directions)."
 
     @property
     def angle(self) -> Angle:
@@ -77,11 +84,12 @@ class PositionFactory:
             Position(
                 None, PositionShardHorizontal.LEFT, ["L", "A"], Vector(0, 0.5), 90
             ),
+            # Middle
+            Position(None, None, ["S", "M"], Vector(0.5, 0.5)),
             Position(
-                None, PositionShardHorizontal.RIGHT, ["R", "F"], Vector(1, 0.5), 270
+                None, PositionShardHorizontal.RIGHT, ["R", "D"], Vector(1, 0.5), 270
             ),
             Position(PositionShardVertical.TOP, None, ["T", "W"], Vector(0.5, 0), 0),
-            Position(None, None, ["S", "M"], Vector(0.5, 0.5)),
             Position(
                 PositionShardVertical.TOP,
                 PositionShardHorizontal.LEFT,
@@ -98,26 +106,11 @@ class PositionFactory:
             ),
         ]
 
-    @property
-    def _shard_dict(self) -> dict[str, PositionShard]:
-        return {
-            v.value: v
-            for v in [e for e in PositionShardHorizontal]
-            + [e for e in PositionShardVertical]
-        }
-
-    def _str_to_shard(self, shard: str) -> PositionShard | None:
-        """
-        Gets a position shard from the string representation.
-        """
-        return self._shard_dict.get(shard, None)
-
-    def get_position(self, key: list[str] | tuple[str] | str) -> Position | None:
+    def get_position(self, key: str) -> Position | None:
         """
         Gets a position from the key, which can be:
         - a mnemonic
         - a shortcut
-        - position id ("left", "top", etc)
 
         :param key: search key
         :return: a position matching the key, None otherwise
@@ -128,28 +121,34 @@ class PositionFactory:
         )
         if len(candidates) > 0:
             pos = candidates[0]
-        if not pos:
-            searched = list(key) if isinstance(key, (str, tuple)) else key
-            searched = [self._str_to_shard(s) for s in searched]
-            halign = next(
-                (p for p in searched if isinstance(p, PositionShardHorizontal)), None
-            )
-            valign = next(
-                (p for p in searched if isinstance(p, PositionShardVertical)), None
-            )
-            pos = next(
-                (
-                    p
-                    for p in self._positions
-                    if p.halign == halign and p.valign == valign
-                ),
-                None,
-            )
+        # TODO Solve for "mixed" shards or more human writing (ex: "left bottom")
+        # if not pos:
+        #     searched = list(key) if isinstance(key, (str, tuple)) else key
+        #     searched = [self._str_to_shard(s) for s in searched]
+        #     halign = next(
+        #         (p for p in searched if isinstance(p, PositionShardHorizontal)), None
+        #     )
+        #     valign = next(
+        #         (p for p in searched if isinstance(p, PositionShardVertical)), None
+        #     )
+        #     pos = next(
+        #         (
+        #             p
+        #             for p in self._positions
+        #             if p.halign == halign and p.valign == valign
+        #         ),
+        #         None,
+        #     )
         return pos
 
     def is_position(self, o) -> bool:
-        return o in self._shard_dict or o in [
+        """
+        Checks if a given object is a position, i.e. if it corresponds to any shortcut or mnemonics from the defined positions.
+        """
+        return o in [
             s for pl in self._positions for s in pl.shortcuts
+        ] or o in [
+            p.mnemonics for p in self._positions
         ]
 
 

@@ -54,6 +54,7 @@ class CfgParser:
             elif color:
                 colors.append(color)
             else:
+                # TODO Indicate line and character index
                 self._log.warning("Unknown cfg param '%s'", param)
         cfg.update(self._do_sizes(sizes))
         cfg.update(self._do_colors(colors))
@@ -87,6 +88,7 @@ class CfgParser:
                 elif Size.is_size(param):
                     sizes.append(Size(param))
                 else:
+                    # TODO Indicate line and character index
                     self._log.warning("Unknown layout parameter '%s'.", param)
         ret.update({f"layout.{k}": p for k, p in self._do_sizes(sizes)})
         ret["layout.keypoints"] = keypoints

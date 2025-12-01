@@ -65,7 +65,7 @@ class GridConfig(Searchable):
     "Color of the grid border."
     border_width: int = 1
     "Border width (in px)."
-    cell_size: float = 16
+    cell_size: float = 64
     "Size of the grid cells (in pixels)."
     grid_over_components: bool = True
     "Whether the grid is displayed on top of the components (True, default) or under (False)."

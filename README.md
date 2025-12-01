@@ -1,12 +1,34 @@
 # Grid Generator
 
-Python tool to generate shapes in a grid from a simple text representative file.
+Python tool to generate images with shapes in a grid from a simple text representative file.
 
-**This project is still under construction.**
+**The software is functional but still a bit rough around the edges.**
+
+This tool is grid based and is not supposed to have floating items, all shapes will be linked to a cell and possibly displayed in it.
+Each line of the input file is a table row and each column is delimited by `|` characters. At least one line should have all desired columns, otherwise trailing empty columns can be left empty.
+
+Text file example (full):
+```
+{line[top,bottom]}2Arrow{right}|{line}3Arrow{top}|{bottom_right;line}3Arrow
+{line}Circle{orange};Arrow|{top_right;line[top_left,bottom_right]}Circle{green}Circle{blue;50%}Arrow
+{bottom_right}Circle{green}Circle{blue;50%}Arrow|{top_right}Circle{green}Circle{blue;50%}Arrow|{top_left}Circle{green}Circle{blue;50%}Arrow
+```
+
+Text file example (shortcuts):
+```
+{line[T,B]}2A{R}|{line}3A{T}|{C;line}3A
+{line}C{orange};A|{E;line[Q,C]}C{green}C{blue;50%}A
+{Z}C{green}C{blue;50%}A|{E}C{green}C{blue;50%}A|{Q}C{green}C{blue;50%}A
+```
+
+Result (as svg):
+
+![Grid generator example result](doc/example.png "Grid generator example result")
+
 
 ## Dependencies
 
-This software uses Python 3.13.
+This software uses Python 3.13+.
 
 The rest of the dependencies can be seen in the [requirements.txt file](requirements.txt).
 
